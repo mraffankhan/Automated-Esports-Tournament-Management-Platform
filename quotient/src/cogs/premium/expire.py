@@ -42,7 +42,7 @@ async def deactivate_premium(guild_id: int):
 
 async def extra_guild_perks(guild_id: int):
     _list = [
-        "- Can't use Quotient Pro bot.",
+        "- Can't use Potato Premium bot.",
         "- Tourney reactions emojis will be changed to default.",
         "- No more than 1 Media Partner Channel per tourney.",
     ]
@@ -80,21 +80,21 @@ async def remind_guild_to_pay(guild: discord.Guild, model: Guild):
     if (_ch := model.private_ch) and _ch.permissions_for(_ch.guild.me).embed_links:
         _e = discord.Embed(
             color=discord.Color.red(),
-            title="⚠️__**Quotient Pro Ending Soon**__⚠️",
+            title="⚠️__**Potato Premium Ending Soon**__⚠️",
             url=config.SERVER_LINK,
         )
 
         _e.description = (
-            f"This is to inform you that your subscription of **Quotient Pro** is ending soon "
+            f"This is to inform you that your subscription of **Potato Premium** is ending soon "
             f"({discord_timestamp(model.premium_end_time,'D')})"
-            "\n\n*Kindly renew your subscription to continue using Quotient Premium features.*"
+            "\n\n*Kindly renew your subscription to continue using Potato Premium features.*"
         )
 
         _roles = [
             role.mention for role in guild.roles if all((role.permissions.administrator, not role.managed, role.members))
         ]
 
-        _view = PremiumView(label="Renew Quotient Pro")
+        _view = PremiumView(label="Renew Potato Premium")
         await _ch.send(
             embed=_e,
             view=_view,
@@ -106,8 +106,8 @@ async def remind_guild_to_pay(guild: discord.Guild, model: Guild):
 async def remind_user_to_pay(user: discord.User, model: User):
     _e = discord.Embed(color=discord.Color.red(), title="⚠️__**IMPORTANT**__⚠️")
     _e.description = (
-        f"This is to remind you that your subscription of **Quotient Pro** is ending {discord_timestamp(model.premium_expire_time)}"
-        f"\n[*Click Me To Continue Enjoying Quotient Pro*](https://quotientbot.xyz/premium)"
+        f"This is to remind you that your subscription of **Potato Premium** is ending {discord_timestamp(model.premium_expire_time)}"
+        f"\n[*Click Me To Continue Enjoying Potato Premium*]({config.SERVER_LINK})"
     )
     with suppress(discord.HTTPException):
         await user.send(embed=_e)

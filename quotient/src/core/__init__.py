@@ -1,4 +1,4 @@
-from .Bot import Quotient, bot
+from .Bot import Potato, bot
 from .Cog import Cog
 from .Context import Context
 from .cooldown import *

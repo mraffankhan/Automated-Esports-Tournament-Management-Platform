@@ -3,7 +3,7 @@ from __future__ import annotations
 import typing
 
 if typing.TYPE_CHECKING:
-    from core import Quotient
+    from core import Potato
 
 import asyncio
 from datetime import datetime, timedelta
@@ -19,7 +19,7 @@ from utils import IST
 class Reminders(Cog):
     """Reminders to do something."""
 
-    def __init__(self, bot: Quotient):
+    def __init__(self, bot: Potato):
         self.bot = bot
         self._have_data = asyncio.Event()
         self._current_timer = None
@@ -107,5 +107,5 @@ class Reminders(Cog):
         return timer
 
 
-async def setup(bot: Quotient):
+async def setup(bot: Potato):
     await bot.add_cog(Reminders(bot))

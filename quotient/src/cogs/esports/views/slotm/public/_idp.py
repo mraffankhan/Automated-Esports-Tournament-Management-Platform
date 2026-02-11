@@ -25,7 +25,7 @@ class IdpTransfer(discord.ui.Button):
         if not await self.view.bot.is_premium_guild(interaction.guild_id):
             return await interaction.followup.send(
                 "IDP Transfer feature is only available for premium servers.\n\n"
-                f"*This server needs to purchase [Quotient Premium]({self.view.bot.prime_link}) to use this feature.*",
+                f"*This server needs to purchase [Potato Premium]({self.view.bot.prime_link}) to use this feature.*",
                 ephemeral=True,
             )
 

@@ -25,6 +25,7 @@ class TourneySetupWizard(TourneyView):
         self.add_item(SetGroupSize(ctx, "e"))
         self.add_item(SetSlots(ctx, "f"))
         self.add_item(SetEmojis(ctx, "g"))
+        self.add_item(SetTourneyname(ctx, "h"))
         self.add_item(DiscardButton(ctx))
         self.add_item(SaveTourney(ctx))
 
@@ -33,6 +34,7 @@ class TourneySetupWizard(TourneyView):
             self.record = Tourney(guild_id=self.ctx.guild.id, host_id=self.ctx.author.id)
 
         fields = {
+            "Tournament Name": self.record.name,
             "Registration Channel": getattr(self.record.registration_channel, "mention", "`Not-Set`"),
             "Confirm Channel": getattr(self.record.confirm_channel, "mention", "`Not-Set`"),
             "Success Role": getattr(self.record.role, "mention", "`Not-Set`"),

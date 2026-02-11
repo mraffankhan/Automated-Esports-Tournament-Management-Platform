@@ -3,7 +3,7 @@ from __future__ import annotations
 import typing as T
 
 if T.TYPE_CHECKING:
-    from core import Quotient
+    from core import Potato
 
 from datetime import datetime, timedelta
 from random import randint
@@ -131,7 +131,7 @@ class CancelButton(discord.ui.Button):
 
 
 class ScrimsSlash(commands.GroupCog, name="scrims"):
-    def __init__(self, bot: Quotient):
+    def __init__(self, bot: Potato):
         self.bot = bot
 
         super().__init__()
@@ -267,7 +267,7 @@ class ScrimsSlash(commands.GroupCog, name="scrims"):
                         color=discord.Color.red(),
                         description=(
                             "You can only create 3 scrims in a server without premium.\n\n"
-                            "### Use `qpro` command to activate Quotient Pro."
+                            "### Use `qpro` command to activate Potato Pro."
                         ),
                     )
                 )

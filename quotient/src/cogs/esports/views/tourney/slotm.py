@@ -7,7 +7,7 @@ from models import TMSlot, Tourney
 from utils import BaseSelector, Prompt, emote, truncate_string
 
 if TYPE_CHECKING:
-    from core import Quotient
+    from core import Potato
 
 import asyncio
 
@@ -20,7 +20,7 @@ from ...helpers import update_confirmed_message
 
 
 class TCancelSlotSelector(discord.ui.Select):
-    def __init__(self, bot: Quotient, slots: List[TMSlot], placeholder: str = "Select a slot to cancel"):
+    def __init__(self, bot: Potato, slots: List[TMSlot], placeholder: str = "Select a slot to cancel"):
         _options = []
         for slot in slots:
             slot.members.append(slot.leader_id)
@@ -44,7 +44,7 @@ class TCancelSlotSelector(discord.ui.Select):
 
 
 class TourneySlotManager(discord.ui.View):
-    def __init__(self, bot: Quotient, *, tourney: Tourney):
+    def __init__(self, bot: Potato, *, tourney: Tourney):
         self.tourney = tourney
         self.bot = bot
         self.title = "Tourney Slot Manager"

@@ -4,21 +4,21 @@ import typing as T
 from os import truncate
 
 if T.TYPE_CHECKING:
-    from core import Quotient
+    from core import Potato
 
 from datetime import timedelta
 
 import discord
 from discord.ext import commands
 
-from core import Cog, Context, QuotientView, embeds
+from core import Cog, Context, PotatoView, embeds
 from models import Alert, Prompt, Read, Timer
 from utils import QuoPaginator, discord_timestamp
 
-__all__ = ("QuoAlerts",)
+__all__ = ("PotatoAlerts",)
 
 
-class PromptView(QuotientView):
+class PromptView(PotatoView):
     def __init__(self, ctx: Context, alert: Alert):
         super().__init__(ctx, timeout=300)
         self.ctx = ctx
@@ -59,8 +59,8 @@ class CreateAlert(discord.ui.Button):
         await self.ctx.success("Created a new alert with `ID: {}`".format(record.id))
 
 
-class QuoAlerts(Cog):
-    def __init__(self, bot: Quotient):
+class PotatoAlerts(Cog):
+    def __init__(self, bot: Potato):
         self.bot = bot
 
     def cog_check(self, ctx: Context):

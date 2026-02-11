@@ -6,7 +6,7 @@ from contextlib import suppress
 from cogs.esports.helpers.tourney import get_tourney_from_channel
 
 if typing.TYPE_CHECKING:
-    from core import Quotient
+    from core import Potato
 
 import asyncio
 from unicodedata import normalize
@@ -30,7 +30,7 @@ from ..helpers import (
 
 
 class TourneyEvents(Cog):
-    def __init__(self, bot: Quotient):
+    def __init__(self, bot: Potato):
         self.bot = bot
         self.__tourney_lock = asyncio.Lock()
 
@@ -318,7 +318,7 @@ class TourneyEvents(Cog):
             color=discord.Color.red(),
             description=(
                 "Someone renamed this channel kindly rename it back to `quotient-tourney-logs`, "
-                "**Quotient Tourneys won't work without it.**"
+                "**Potato Tourneys won't work without it.**"
             ),
         )
         await after.send(
@@ -336,8 +336,8 @@ class TourneyEvents(Cog):
         _e = discord.Embed(
             color=discord.Color.red(),
             description=(
-                f"Someone renamed Quotient's tourney-mod role to {after.mention}, kindly rename it back to `tourney-mod`."
-                "**Quotient Tourneys need the name of this role to be `tourney-mod`**"
+                f"Someone renamed Potato's tourney-mod role to {after.mention}, kindly rename it back to `tourney-mod`."
+                "**Potato Tourneys need the name of this role to be `tourney-mod`**"
             ),
         )
 

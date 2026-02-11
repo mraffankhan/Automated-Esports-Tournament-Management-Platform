@@ -3,7 +3,7 @@ from __future__ import annotations
 import typing as T
 
 if T.TYPE_CHECKING:
-    from core import Quotient
+    from core import Potato
 
 from aiohttp import web
 from aiohttp_asgi import ASGIResource
@@ -19,7 +19,7 @@ class ApiServer(Cog):
     app_started: bool = False
     webserver: web.TCPSite
 
-    def __init__(self, bot: Quotient):
+    def __init__(self, bot: Potato):
         self.bot = bot
 
     async def cog_load(self) -> None:
@@ -46,5 +46,5 @@ class ApiServer(Cog):
         return aiohttp_app, webserver
 
 
-async def setup(bot: Quotient):
+async def setup(bot: Potato):
     await bot.add_cog(ApiServer(bot))

@@ -3,7 +3,7 @@ from __future__ import annotations
 import typing as T
 
 if T.TYPE_CHECKING:
-    from core import Quotient
+    from core import Potato
 
 from core import Cog
 
@@ -13,7 +13,7 @@ __all__ = ("SlashCog",)
 
 
 class SlashCog(Cog):
-    def __init__(self, bot: Quotient):
+    def __init__(self, bot: Potato):
         self.bot = bot
 
     async def cog_load(self) -> None:

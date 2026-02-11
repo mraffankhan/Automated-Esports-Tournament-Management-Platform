@@ -8,7 +8,7 @@ from models import Guild, Tourney
 from ...views.base import EsportsBaseView
 
 if TYPE_CHECKING:
-    from core import Quotient
+    from core import Potato
 
 import asyncio
 
@@ -28,7 +28,7 @@ class TourneyGroupManager(EsportsBaseView):
         self.ctx = ctx
         self.tourney = tourney
         self.size = size
-        self.bot: Quotient = ctx.bot
+        self.bot: Potato = ctx.bot
 
     @staticmethod
     def initial_embed(tourney: Tourney, size: int) -> discord.Embed:
@@ -89,7 +89,7 @@ class TourneyGroupManager(EsportsBaseView):
             f"Write the group number and the name of group role.\n"
             "**Format:** `Group Number, Name of Group Role`\n\n"
             "Note that you can also mention the role instead of name to give it to users, "
-            "or just write its name, if there is no role of that name, Quotient "
+            "or just write its name, if there is no role of that name, Potato "
             "will create the role and give it to group leaders.\n\n"
             "**Example:**```1, @group_role\n2, Group role\n3, @3rd_group```\n"
             "*Enter upto 15 roles at a time.*",
@@ -192,7 +192,7 @@ class GroupListView(EsportsBaseView):
         super().__init__(ctx, timeout=30, title="Group List Publisher")
 
         self.ctx = ctx
-        self.bot: Quotient = ctx.bot
+        self.bot: Potato = ctx.bot
         self.tourney = tourney
         self.size = size
         self.channel = channel
@@ -205,7 +205,7 @@ class GroupListView(EsportsBaseView):
             description=(
                 f"**How would you like to publish the group list of {tourney}?**\n\n"
                 "• `Webhook` will create a webhook in the channel and will send group embeds with your server's logo and name.\n"
-                "• `Bot Option` will just make Quotient send the embeds.\n\n"
+                "• `Bot Option` will just make Potato send the embeds.\n\n"
                 "*Webhook Option is more cool.*"
             ),
         )

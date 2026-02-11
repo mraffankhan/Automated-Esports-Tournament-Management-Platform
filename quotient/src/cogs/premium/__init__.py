@@ -4,7 +4,7 @@ import asyncio
 import typing
 
 if typing.TYPE_CHECKING:
-    from core import Quotient
+    from core import Potato
 
 from contextlib import suppress
 from datetime import datetime, timedelta
@@ -24,15 +24,15 @@ from .views import PremiumPurchaseBtn, PremiumView
 
 
 class PremiumCog(Cog, name="Premium"):
-    def __init__(self, bot: Quotient):
+    def __init__(self, bot: Potato):
         self.bot = bot
         self.remind_peeps_to_pay.start()
         self.hook = discord.Webhook.from_url(self.bot.config.PUBLIC_LOG, session=self.bot.session) if self.bot.config.PUBLIC_LOG else None
 
-    @commands.command()
+    @commands.hybrid_command()
     @commands.bot_has_permissions(embed_links=True)
     async def pstatus(self, ctx: Context):
-        """Get your Quotient Premium status and the current server's."""
+        """Get your Potato Premium status and the current server's."""
         user = await User.get_or_none(user_id=ctx.author.id)
         guild = await Guild.filter(guild_id=ctx.guild.id).first()
 
@@ -57,11 +57,11 @@ class PremiumCog(Cog, name="Premium"):
 
     @commands.hybrid_command(aliases=("perks", "pro"))
     async def premium(self, ctx: Context):
-        """Checkout Quotient Premium Plans."""
+        """Checkout Potato Premium Plans."""
         _e = discord.Embed(
             color=self.bot.color,
-            description=f"[**Features of Quotient Pro -**]({self.bot.config.SERVER_LINK})\n\n"
-            f"{emote.check} Access to `Quotient Pro` bot.\n"
+            description=f"[**Features of Potato Premium -**]({self.bot.config.SERVER_LINK})\n\n"
+            f"{emote.check} Access to `Potato Premium` bot.\n"
             f"{emote.check} Unlimited Scrims.\n"
             f"{emote.check} Unlimited Tournaments.\n"
             f"{emote.check} Custom Reactions for Regs.\n"
@@ -123,10 +123,10 @@ class PremiumCog(Cog, name="Premium"):
 
         if (_ch := _g.private_ch) and _ch.permissions_for(_ch.guild.me).embed_links:
             _e = discord.Embed(
-                color=discord.Color.red(), title="⚠️__**Quotient Pro Subscription Ended**__⚠️", url=config.SERVER_LINK
+                color=discord.Color.red(), title="⚠️__**Potato Pro Subscription Ended**__⚠️", url=config.SERVER_LINK
             )
             _e.description = (
-                "This is to inform you that your subscription of Quotient Pro has been ended.\n\n"
+                "This is to inform you that your subscription of Potato Pro has been ended.\n\n"
                 "*Following is a list of perks or data you lost:*"
             )
 
@@ -174,7 +174,7 @@ class PremiumCog(Cog, name="Premium"):
 
         with suppress(discord.HTTPException, AttributeError):
             _e = discord.Embed(
-                color=discord.Color.gold(), description=f"Thanks **{member}** for purchasing Quotient Premium."
+                color=discord.Color.gold(), description=f"Thanks **{member}** for purchasing Potato Premium."
             )
             _e.set_image(url=random_thanks())
             await self.hook.send(embed=_e, username="premium-logs", avatar_url=self.bot.config.PREMIUM_AVATAR)
@@ -188,13 +188,13 @@ class PremiumCog(Cog, name="Premium"):
             url=self.bot.config.SERVER_LINK,
             description=(
                 f"{random_greeting()} {member.mention},\n"
-                f"Thanks for purchasing Quotient Premium. Your server **{upgraded_guild}** has access to Quotient Pro features until `{_guild.premium_end_time.strftime('%d-%b-%Y %I:%M %p')}`.\n\n"
-                "[Click me to Invite Quotient Pro Bot to your server](https://discord.com/oauth2/authorize?client_id=902856923311919104&scope=applications.commands%20bot&permissions=21175985838)\n"
+                f"Thanks for purchasing Potato Premium. Your server **{upgraded_guild}** has access to Potato Pro features until `{_guild.premium_end_time.strftime('%d-%b-%Y %I:%M %p')}`.\n\n"
+                "[Click me to Invite Potato Pro Bot to your server](https://discord.com/oauth2/authorize?client_id=902856923311919104&scope=applications.commands%20bot&permissions=21175985838)\n"
             ),
         )
 
         if member not in self.bot.server.members:
-            _e.description += f"\n\n[To claim your Premium Role, Join Quotient HQ]({self.bot.config.SERVER_LINK})."
+            _e.description += f"\n\n[To claim your Premium Role, Join Potato HQ]({self.bot.config.SERVER_LINK})."
 
         _view = discord.ui.View(timeout=None)
 
@@ -204,5 +204,5 @@ class PremiumCog(Cog, name="Premium"):
             pass
 
 
-async def setup(bot: Quotient) -> None:
+async def setup(bot: Potato) -> None:
     await bot.add_cog(PremiumCog(bot))

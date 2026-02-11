@@ -3,7 +3,7 @@ from __future__ import annotations
 import typing
 
 if typing.TYPE_CHECKING:
-    from core import Quotient
+    from core import Potato
 
 import asyncio
 from collections import defaultdict
@@ -18,16 +18,16 @@ from models import ArrayRemove, Autorole, Commands
 
 class UserCommandLimits(defaultdict):
     def __missing__(self, key):
-        r = self[key] = cooldown.QuotientRatelimiter(2, 10)
+        r = self[key] = cooldown.PotatoRatelimiter(2, 10)
         return r
 
 
 class CmdEvents(Cog):
-    def __init__(self, bot: Quotient):
+    def __init__(self, bot: Potato):
         self.bot = bot
 
         self.command_ratelimited_users = {}
-        self.command_ratelimiter = UserCommandLimits(cooldown.QuotientRatelimiter)
+        self.command_ratelimiter = UserCommandLimits(cooldown.PotatoRatelimiter)
 
     async def bot_check(self, ctx: Context):
         author = ctx.author
@@ -56,8 +56,8 @@ class CmdEvents(Cog):
 
         if self.bot.lockdown is True:
             t = (
-                "**Quotient is getting new features** 🥳\n"
-                "Dear user, Quotient is updating and is not accepting any commands.\n"
+                "**Potato is getting new features** 🥳\n"
+                "Dear user, Potato is updating and is not accepting any commands.\n"
                 "It will back within **2 minutes**.\n"
             )
 

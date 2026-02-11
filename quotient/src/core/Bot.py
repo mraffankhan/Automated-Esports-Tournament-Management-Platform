@@ -37,13 +37,13 @@ os.environ["JISHAKU_NO_UNDERSCORE"] = "True"
 os.environ["JISHAKU_NO_DM_TRACEBACK"] = "True"
 os.environ["OMP_THREAD_LIMIT"] = "1"
 
-__all__ = ("Quotient", "bot")
+__all__ = ("Potato", "bot")
 
 
-on_startup: List[Callable[["Quotient"], Coroutine]] = []
+on_startup: List[Callable[["Potato"], Coroutine]] = []
 
 
-class Quotient(commands.AutoShardedBot):
+class Potato(commands.AutoShardedBot):
     def __init__(self, **kwargs: Any) -> None:
         super().__init__(
             command_prefix=self.get_prefix,
@@ -54,7 +54,7 @@ class Quotient(commands.AutoShardedBot):
             help_command=HelpCommand(),
             chunk_guilds_at_startup=False,
             allowed_mentions=AllowedMentions(everyone=False, roles=False, replied_user=True, users=True),
-            activity=discord.Activity(type=discord.ActivityType.listening, name="qsetup | qhelp"),
+            activity=discord.Streaming(name="phelp | psetup", url="https://twitch.tv/quotient"),
             proxy=getattr(cfg, "PROXY_URI", None),
             **kwargs,
         )
@@ -73,11 +73,9 @@ class Quotient(commands.AutoShardedBot):
 
         self.message_cache: Dict[int, Any] = LRU(1024)  # type: ignore
 
-    @on_startup.append
-    async def __load_extensions(self):
-        for ext in self.config.EXTENSIONS:
-            await self.load_extension(ext)
-            print(f"Loaded extension: {ext}")
+
+
+
 
     @on_startup.append
     async def __load_presistent_views(self):
@@ -146,6 +144,35 @@ class Quotient(commands.AutoShardedBot):
 
     async def setup_hook(self) -> None:
         await self.init_quo()
+
+        # Load extensions
+        # Jishaku is in config.EXTENSIONS, so no need to load explicitly here
+        for ext in self.config.EXTENSIONS:
+            try:
+                await self.load_extension(ext)
+                print(f"Loaded extension: {ext}")
+            except Exception as e:
+                print(f"Failed to load extension {ext}: {e}")
+
+        # Sync commands
+        print("Syncing command tree...")
+        try:
+            # Sync globally
+            synced = await self.tree.sync()
+            print(f"Synced {len(synced)} commands globally.")
+
+            # Force sync to the support server for immediate testing
+            if self.config.SERVER_ID:
+                try:
+                    self.tree.copy_global_to(guild=discord.Object(id=self.config.SERVER_ID))
+                    synced_guild = await self.tree.sync(guild=discord.Object(id=self.config.SERVER_ID))
+                    print(f"Synced {len(synced_guild)} commands to guild {self.config.SERVER_ID}.")
+                except Exception as e:
+                    print(f"Failed to sync to guild {self.config.SERVER_ID}: {e}")
+
+        except Exception as e:
+            print(f"Failed to sync command tree: {e}")
+
         for coro_func in on_startup:
             asyncio.create_task(coro_func(self))
 
@@ -211,7 +238,7 @@ class Quotient(commands.AutoShardedBot):
         )
 
     async def on_ready(self):
-        print(f"[Quotient] Logged in as {self.user.name}({self.user.id})")
+        print(f"[Potato] Logged in as {self.user.name}({self.user.id})")
 
     async def wait_and_delete(self, message: discord.Message, delay: int = 10):
         """Waits for `delay` seconds and deletes the message"""
@@ -419,7 +446,7 @@ class Quotient(commands.AutoShardedBot):
                 return
 
 
-bot = Quotient()
+bot = Potato()
 
 
 @bot.before_invoke

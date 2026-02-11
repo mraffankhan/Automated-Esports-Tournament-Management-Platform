@@ -3,7 +3,7 @@ from __future__ import annotations
 import typing
 
 if typing.TYPE_CHECKING:
-    from core import Quotient
+    from core import Potato
 
 from constants import LockType
 from core import Cog
@@ -11,7 +11,7 @@ from models import Lockdown, Timer
 
 
 class LockEvents(Cog):
-    def __init__(self, bot: Quotient):
+    def __init__(self, bot: Potato):
         self.bot = bot
 
     @Cog.listener()

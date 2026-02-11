@@ -5,13 +5,13 @@ from contextlib import suppress
 
 import discord
 
-from core import Context, QuotientView
+from core import Context, PotatoView
 from utils import emote
 
 from .conts import Team
 
 
-class PointsTable(QuotientView):
+class PointsTable(PotatoView):
     def __init__(self, ctx: Context):
         super().__init__(ctx, timeout=100)
 
@@ -80,7 +80,7 @@ class PointsTable(QuotientView):
         if not self.teams:
             return await self.ctx.error("No teams to remove.", 5)
 
-        v = QuotientView(self.ctx)
+        v = PotatoView(self.ctx)
         v.add_item(TeamSelector(self.teams))
         v.message = await inter.followup.send("", view=v, ephemeral=True)
         await v.wait()
@@ -152,7 +152,7 @@ class TeamInput(discord.ui.Modal, title="Add New Team"):
 
 
 class TeamSelector(discord.ui.Select):
-    view: QuotientView
+    view: PotatoView
 
     def __init__(self, teams: T.List[Team]):
         _options = []

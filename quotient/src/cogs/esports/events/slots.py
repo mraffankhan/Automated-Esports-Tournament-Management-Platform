@@ -3,7 +3,7 @@ from __future__ import annotations
 import typing
 
 if typing.TYPE_CHECKING:
-    from core import Quotient
+    from core import Potato
 
 import discord
 
@@ -12,7 +12,7 @@ from models import Scrim, ScrimsSlotManager, Timer
 
 
 class SlotManagerEvents(Cog):
-    def __init__(self, bot: Quotient):
+    def __init__(self, bot: Potato):
         self.bot = bot
 
     @Cog.listener()

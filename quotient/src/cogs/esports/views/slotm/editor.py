@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 from utils.buttons import Prompt
 
 if TYPE_CHECKING:
-    from core import Quotient
+    from core import Potato
 
 from string import ascii_uppercase
 
@@ -27,7 +27,7 @@ class ScrimsSlotmEditor(EsportsBaseView):
         super().__init__(ctx, timeout=30, title="Slot-M Editor")
 
         self.ctx = ctx
-        self.bot: Quotient = ctx.bot
+        self.bot: Potato = ctx.bot
         self.record = record
 
     def initial_embed(self):

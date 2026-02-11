@@ -3,13 +3,13 @@ from __future__ import annotations
 import typing
 
 if typing.TYPE_CHECKING:
-    from core import Quotient
+    from core import Potato
 
 import socketio
 
 
 class QuoSocket(socketio.AsyncClient):
-    bot: Quotient
+    bot: Potato
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

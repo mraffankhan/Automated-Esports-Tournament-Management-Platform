@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from core import Quotient
+    from core import Potato
 
 from core import Cog
 from models import Guild
@@ -12,7 +12,7 @@ __all__ = ("DashboardGate",)
 
 
 class DashboardGate(Cog):
-    def __init__(self, bot: Quotient):
+    def __init__(self, bot: Potato):
         self.bot = bot
 
     @Cog.listener()

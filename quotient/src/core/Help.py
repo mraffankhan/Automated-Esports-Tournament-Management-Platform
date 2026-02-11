@@ -44,14 +44,6 @@ class HelpCommand(commands.HelpCommand):
         if guild and guild.is_premium:
             embed.description += f"<a:top_user:807911932299837460> [__Server Premium ending:__]({config.SERVER_LINK}) {discord_timestamp(guild.premium_end_time)}"
 
-        for cog, cmds in mapping.items():
-            if cog and cog.qualified_name not in hidden and await self.filter_commands(cmds, sort=True):
-                embed.add_field(
-                    inline=False,
-                    name=cog.qualified_name.title(),
-                    value=", ".join(map(lambda x: f"`{x}`", cog.get_commands())),
-                )
-
         slash_cmds = await ctx.bot.tree.fetch_commands()
         if ctx.guild:
             try:
@@ -60,9 +52,19 @@ class HelpCommand(commands.HelpCommand):
             except discord.HTTPException:
                 pass
 
+        for cog, cmds in mapping.items():
+            if cog and cog.qualified_name not in hidden and await self.filter_commands(cmds, sort=True):
+                embed.add_field(
+                    inline=False,
+                    name=cog.qualified_name.title(),
+                    value=", ".join(map(lambda x: f"`{x}`", cog.get_commands())),
+                )
+
         if slash_cmds:
-            slash_cmds = [f"{i.mention}" for i in slash_cmds]
-            embed.add_field(name="Slash Commands", value=", ".join(slash_cmds), inline=False)
+            # Sort slash commands?
+            slash_cmds = sorted(slash_cmds, key=lambda c: c.name)
+            slash_strings = [f"{i.mention}" for i in slash_cmds]
+            embed.add_field(name="Slash Commands", value=", ".join(slash_strings), inline=False)
 
         links = [
             LinkType("Support Server", config.SERVER_LINK),

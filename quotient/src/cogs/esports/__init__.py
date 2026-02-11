@@ -7,12 +7,12 @@ from cogs.esports.views.scrims.main import ScrimsMain
 from cogs.esports.views.tourney.main import TourneyManager
 
 if typing.TYPE_CHECKING:
-    from core import Quotient
+    from core import Potato
 
 import discord
 from discord.ext import commands
 
-from core import Cog, Context, QuotientView
+from core import Cog, Context, PotatoView
 from models import *
 from utils import QuoRole, QuoTextChannel, checks
 
@@ -24,7 +24,7 @@ from .views import *
 
 
 class ScrimManager(Cog, name="Esports"):
-    def __init__(self, bot: Quotient):
+    def __init__(self, bot: Potato):
         self.bot = bot
 
     # ************************************************************************************************
@@ -60,7 +60,7 @@ class ScrimManager(Cog, name="Esports"):
     @commands.cooldown(1, 15, type=commands.BucketType.guild)
     async def smanager(self, ctx: Context):
         """
-        Contains commands related to Quotient's powerful scrims manager.
+        Contains commands related to Potato's powerful scrims manager.
         """
         if not any((ctx.author.guild_permissions.manage_guild, Scrim.is_ignorable(ctx.author))):
             return await ctx.error(f"You need `scrims-mod` role or `Manage-Server` permissions to use this command.")
@@ -78,14 +78,14 @@ class ScrimManager(Cog, name="Esports"):
     )
     @commands.cooldown(1, 15, type=commands.BucketType.guild)
     async def tourney(self, ctx: Context):
-        """Create & Manage tournaments with Quotient"""
+        """Create & Manage tournaments with Potato"""
         if not Tourney.is_ignorable(ctx.author) and not ctx.author.guild_permissions.manage_guild:
             return await ctx.error(
                 "You need either `Manage Server` permissions or `@tourney-mod` role to manage tournaments."
             )
 
         view = TourneyManager(ctx)
-        view.add_item(QuotientView.tricky_invite_button())
+        view.add_item(PotatoView.tricky_invite_button())
         view.message = await ctx.send(embed=await view.initial_embed(), view=view)
 
     @commands.hybrid_command(
@@ -138,7 +138,7 @@ class ScrimManager(Cog, name="Esports"):
 
         if count == 1 and not guild.is_premium:
             return await ctx.error(
-                f"Upgrade your server to Quotient Premium to setup more than 1 EasyTag channel.\n[Click Me to Purchase]({self.bot.prime_link})"
+                f"Upgrade your server to Potato Premium to setup more than 1 EasyTag channel.\n[Click Me to Purchase]({self.bot.prime_link})"
             )
 
         if channel.id in self.bot.cache.eztagchannels:
@@ -164,9 +164,9 @@ class ScrimManager(Cog, name="Esports"):
 
         embed = self.bot.embed(ctx, title="Easy Tagging")
         embed.description = """
-        Unable to mention teammates while registering for scrims or tournaments? Quotient is here for the rescue.
+        Unable to mention teammates while registering for scrims or tournaments? Potato is here for the rescue.
 
-        Use `teammate's ID`, `@teammate_name` or `@teammate's_discord_tag` in your registration format. Quotient will convert that into an actual discord tag.        
+        Use `teammate's ID`, `@teammate_name` or `@teammate's_discord_tag` in your registration format. Potato will convert that into an actual discord tag.        
         """
         embed.set_image(url="https://media.discordapp.net/attachments/775707108192157706/850788091236450344/eztags.gif")
         msg = await channel.send(embed=embed)
@@ -255,7 +255,7 @@ class ScrimManager(Cog, name="Esports"):
 
         if count == 1 and not guild.is_premium:
             return await ctx.error(
-                f"Upgrade your server to Quotient Premium to setup more than 1 Tagcheck channel.\n[Click Me to Purchase]({self.bot.prime_link})"
+                f"Upgrade your server to Potato Premium to setup more than 1 Tagcheck channel.\n[Click Me to Purchase]({self.bot.prime_link})"
             )
 
         if channel.id in self.bot.cache.tagcheck:
@@ -353,7 +353,7 @@ class ScrimManager(Cog, name="Esports"):
         """
         _view = ScrimsSlotManagerSetup(ctx)
         _e = await _view.initial_message(ctx.guild)
-        _view.add_item(QuotientView.tricky_invite_button())
+        _view.add_item(PotatoView.tricky_invite_button())
         _view.message = await ctx.send(embed=_e, view=_view, embed_perms=True)
 
     @commands.command(name="banlog", extras={"examples": ["banlog #channel"]})
@@ -395,7 +395,7 @@ class ScrimManager(Cog, name="Esports"):
         _view.message = await ctx.send(embed=await _view.initial_message(), view=_view, embed_perms=True)
 
 
-async def setup(bot: Quotient):
+async def setup(bot: Potato):
     await bot.add_cog(ScrimManager(bot))
     await bot.add_cog(SMError(bot))
     await bot.add_cog(ScrimEvents(bot))

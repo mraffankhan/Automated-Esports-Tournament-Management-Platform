@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from core import Quotient
+    from core import Potato
 
 from contextlib import suppress
 
@@ -17,7 +17,7 @@ from ..schemas import SockResponse
 
 
 class SockSettings(Cog):
-    def __init__(self, bot: Quotient):
+    def __init__(self, bot: Potato):
         self.bot = bot
         self.hook = discord.Webhook.from_url(self.bot.config.PUBLIC_LOG, session=self.bot.session) if self.bot.config.PUBLIC_LOG else None
 

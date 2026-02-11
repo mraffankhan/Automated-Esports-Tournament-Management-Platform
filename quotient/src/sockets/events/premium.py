@@ -4,7 +4,7 @@ import typing as T
 from contextlib import suppress
 
 if T.TYPE_CHECKING:
-    from core import Quotient
+    from core import Potato
 
 import discord
 
@@ -15,7 +15,7 @@ __all__ = ("SockPrime",)
 
 
 class SockPrime(Cog):
-    def __init__(self, bot: Quotient):
+    def __init__(self, bot: Potato):
         self.bot = bot
         self.hook = discord.Webhook.from_url(self.bot.config.PUBLIC_LOG, session=self.bot.session) if self.bot.config.PUBLIC_LOG else None
 
@@ -57,8 +57,8 @@ class SockPrime(Cog):
         _e = discord.Embed(color=self.bot.color)
         _e.description = (
             f"{random_greeting()} {member.mention},\n"
-            "Thanks for purchasing Quotient Premium.\n\n"
-            f"[Invite Quotient Pro]({prime}) | [Support Server]({self.bot.config.SERVER_LINK}) | [Download Invoice]({invoice})"
+            "Thanks for purchasing Potato Premium.\n\n"
+            f"[Invite Potato Pro]({prime}) | [Support Server]({self.bot.config.SERVER_LINK}) | [Download Invoice]({invoice})"
         )
 
         _e.set_image(url=random_thanks())
@@ -70,7 +70,7 @@ class SockPrime(Cog):
 
         finally:
             _e = discord.Embed(
-                color=discord.Color.gold(), description=f"Thanks **{member}** for purchasing Quotient Premium."
+                color=discord.Color.gold(), description=f"Thanks **{member}** for purchasing Potato Premium."
             )
             _e.set_image(url=random_thanks())
             await self.hook.send(embed=_e, username="premium-logs", avatar_url=self.bot.config.PREMIUM_AVATAR)
@@ -92,15 +92,15 @@ class SockPrime(Cog):
     #             return
 
     #         res = await res.json()
-    #         _f = discord.Embed(color=self.bot.color, title="Quotient x RILP BOT", url=self.bot.config.SERVER_LINK)
+    #         _f = discord.Embed(color=self.bot.color, title="Potato x RILP BOT", url=self.bot.config.SERVER_LINK)
     #         _f.description = (
-    #             "Quotient has partnered with Rilp Bot, a multipurpose bot that features Automoderation, "
+    #             "Potato has partnered with Rilp Bot, a multipurpose bot that features Automoderation, "
     #             "Invite Tracking, Starboard, Welcome and Leave messages, Giveaways, Polls, Moderation, "
     #             "Captcha Security, and much more.\n\n"
-    #             "With this Quotient Pro purchase, you have received **Rilp Bot Premium (30 days)**"
+    #             "With this Potato Pro purchase, you have received **Rilp Bot Premium (30 days)**"
     #             "\n\n__Please follow these steps:__\n"
     #             "➜ Head over to dashboard <https://rilp-bot.tech>\n"
-    #             "➜ Login with your discord account from which you bought Quotient Pro.\n"
+    #             "➜ Login with your discord account from which you bought Potato Pro.\n"
     #             "➜ Click on the dropdown beside avatar and then head over to `Manage Subscription`\n"
     #             "➜ Click on 'Select Server' and choose your server to activate premium.\n\n"
     #             "To Invite RILP BOT - <https://rilp-bot.tech/invite>\n"

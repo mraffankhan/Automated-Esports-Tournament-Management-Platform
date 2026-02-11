@@ -3,7 +3,7 @@ from __future__ import annotations
 import typing
 
 if typing.TYPE_CHECKING:
-    from core import Quotient
+    from core import Potato
 
 from contextlib import suppress
 
@@ -15,7 +15,7 @@ from utils import discord_timestamp
 
 
 class ReminderEvents(Cog):
-    def __init__(self, bot: Quotient):
+    def __init__(self, bot: Potato):
         self.bot = bot
 
     @Cog.listener()

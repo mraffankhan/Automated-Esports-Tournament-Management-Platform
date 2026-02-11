@@ -252,7 +252,7 @@ class Tourney(BaseDbModel):
     async def prompt_selector(ctx: Context, *, tourneys: List["Tourney"] = None, placeholder: str = None):
         placeholder = placeholder or "Choose a tourney to contine..."
 
-        from cogs.esports.views.tourney._select import QuotientView, TourneySelector
+        from cogs.esports.views.tourney._select import PotatoView, TourneySelector
 
         tourneys = tourneys or await Tourney.filter(guild_id=ctx.guild.id).order_by("id").limit(25)
 
@@ -262,7 +262,7 @@ class Tourney(BaseDbModel):
         if len(tourneys) == 1:
             return tourneys[0]
 
-        view = QuotientView(ctx)
+        view = PotatoView(ctx)
         view.add_item(TourneySelector(placeholder, tourneys))
 
         view.message = await ctx.send("Choose a tourney from the dropdown below...", view=view)

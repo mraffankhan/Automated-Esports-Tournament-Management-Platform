@@ -11,9 +11,9 @@ from constants import IST
 class CacheManager:
     def __init__(self, bot):
         if TYPE_CHECKING:
-            from .Bot import Quotient
+            from .Bot import Potato
 
-        self.bot: Quotient = bot
+        self.bot: Potato = bot
 
         self.guild_data = {}
         self.eztagchannels = set()

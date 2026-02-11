@@ -3,7 +3,7 @@ from __future__ import annotations
 import typing
 
 if typing.TYPE_CHECKING:
-    from core import Quotient
+    from core import Potato
 
 import asyncio
 from datetime import datetime, timedelta
@@ -25,7 +25,7 @@ from ..helpers import (
 
 
 class ScrimEvents(Cog):
-    def __init__(self, bot: Quotient):
+    def __init__(self, bot: Potato):
         self.bot = bot
 
         self.__scrim_lock = asyncio.Lock()

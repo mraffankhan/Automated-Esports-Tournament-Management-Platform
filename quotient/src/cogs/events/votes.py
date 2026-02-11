@@ -3,7 +3,7 @@ from __future__ import annotations
 import typing
 
 if typing.TYPE_CHECKING:
-    from core import Quotient
+    from core import Potato
 
 import discord
 from discord import Webhook
@@ -14,7 +14,7 @@ from models import Timer, User, Votes
 
 
 class VotesCog(Cog):
-    def __init__(self, bot: Quotient):
+    def __init__(self, bot: Potato):
         self.bot = bot
         self.hook = Webhook.from_url(self.bot.config.PUBLIC_LOG, session=self.bot.session) if self.bot.config.PUBLIC_LOG else None
 
@@ -50,7 +50,7 @@ class VotesCog(Cog):
                 color=self.bot.color,
                 description=f"{constants.random_greeting()}, You asked me to remind you to vote.",
                 title="Vote Expired!",
-                url="https://quotientbot.xyz/vote",
+                url="https://platform.genzconnect.pro/vote",
             )
             try:
                 await member.send(embed=embed)

@@ -8,7 +8,7 @@ import discord
 from models import AssignedSlot, BanLog, Scrim
 
 if T.TYPE_CHECKING:
-    from core import Quotient
+    from core import Potato
 
 import asyncio
 import random
@@ -26,7 +26,7 @@ __all__ = ("SlotlistEditButton",)
 class SlotlistEditButton(discord.ui.View):
     message: discord.Message
 
-    def __init__(self, bot: Quotient, scrim: Scrim):
+    def __init__(self, bot: Potato, scrim: Scrim):
         super().__init__(timeout=None)
 
         self.bot = bot

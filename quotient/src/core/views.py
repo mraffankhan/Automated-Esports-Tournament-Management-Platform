@@ -11,10 +11,10 @@ from utils import emote
 if TYPE_CHECKING:
     from .Context import Context
 
-__all__ = ("QuotientView", "QuoInput", "QuoDMView")
+__all__ = ("PotatoView", "QuoInput", "QuoDMView")
 
 
-class QuotientView(discord.ui.View):
+class PotatoView(discord.ui.View):
     message: discord.Message
     custom_id = None
 
@@ -46,7 +46,7 @@ class QuotientView(discord.ui.View):
                 return
 
     async def on_error(self, interaction: discord.Interaction, error: Exception, item) -> None:
-        print("Quotient View Error:", error)
+        print("Potato View Error:", error)
         self.ctx.bot.dispatch("command_error", self.ctx, error)
 
     @staticmethod

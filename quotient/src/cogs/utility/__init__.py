@@ -7,7 +7,7 @@ from discord.utils import escape_markdown, escape_mentions
 from cogs.utility.events import AutoPurgeEvents, ReminderEvents
 
 if typing.TYPE_CHECKING:
-    from core import Quotient
+    from core import Potato
 
 from ast import literal_eval as leval
 from contextlib import suppress
@@ -40,7 +40,7 @@ from .views import *
 
 
 class Utility(Cog, name="utility"):
-    def __init__(self, bot: Quotient):
+    def __init__(self, bot: Potato):
         self.bot = bot
 
     @commands.group(aliases=("timer", "remind"), invoke_without_command=True)
@@ -100,7 +100,7 @@ class Utility(Cog, name="utility"):
     @checks.is_mod()
     async def autorole(self, ctx: Context, off: typing.Optional[str]):
         """
-        Manage Quotient's autoroles.
+        Manage Potato's autoroles.
         """
         if not off or off.lower() != "off":
             return await ctx.send_help(ctx.command)
@@ -201,7 +201,7 @@ class Utility(Cog, name="utility"):
         view = embeds.EmbedBuilder(ctx, items=[EmbedSend(channel), EmbedCancel()])
         await view.rendor()
 
-    @commands.command(name="quickembed", aliases=["qe"])
+    @commands.hybrid_command(name="quickembed", aliases=["qe"])
     @commands.has_permissions(manage_messages=True, embed_links=True)
     @commands.bot_has_permissions(manage_messages=True, embed_links=True)
     async def quick_embed_command(self, ctx: Context, *, text: str):
@@ -593,7 +593,7 @@ class Utility(Cog, name="utility"):
     @commands.group(invoke_without_command=True)
     async def autopurge(self, ctx: Context):
         """
-        Set Quotient to delete every new message in a channel after  a specific interval.
+        Set Potato to delete every new message in a channel after  a specific interval.
         """
         await ctx.send_help(ctx.command)
 
@@ -615,7 +615,7 @@ class Utility(Cog, name="utility"):
         if (count := await AutoPurge.filter(guild_id=ctx.guild.id).count()) >= 1 and not await ctx.is_premium_guild():
             return await ctx.error(
                 "You cannot set autopurge in more than 1 channel in free tier."
-                f"\nHowever [Quotient Premium]({ctx.bot.prime_link}) allows you to set autopurge in unlimited channels."
+                f"\nHowever [Potato Premium]({ctx.bot.prime_link}) allows you to set autopurge in unlimited channels."
             )
 
         if channel.id in self.bot.cache.autopurge_channels:
@@ -651,7 +651,7 @@ class Utility(Cog, name="utility"):
         await ctx.success(f"**{channel}** removed from autopurge channels.")
 
 
-async def setup(bot: Quotient) -> None:
+async def setup(bot: Potato) -> None:
     await bot.add_cog(Utility(bot))
     await bot.add_cog(AutoPurgeEvents(bot))
     await bot.add_cog(ReminderEvents(bot))

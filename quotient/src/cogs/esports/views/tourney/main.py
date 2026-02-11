@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 from models.esports.tourney import TMSlot
 
 if TYPE_CHECKING:
-    from core import Quotient
+    from core import Potato
 
 import asyncio
 import re
@@ -15,8 +15,8 @@ import discord
 from discord import ButtonStyle
 from tortoise.expressions import Q
 
-from core import Context, QuotientView
-from models import Tourney
+from core import Context, PotatoView
+from models import Tourney, User
 from utils import emote, member_input, plural, truncate_string
 
 from ..base import EsportsBaseView
@@ -33,7 +33,7 @@ class TourneyManager(EsportsBaseView):
     def __init__(self, ctx: Context):
         super().__init__(ctx, timeout=100, name="Tourney Manager")
         self.ctx = ctx
-        self.bot: Quotient = ctx.bot
+        self.bot: Potato = ctx.bot
 
     async def initial_embed(self) -> discord.Embed:
         to_show = [
@@ -60,11 +60,13 @@ class TourneyManager(EsportsBaseView):
     @discord.ui.button(style=ButtonStyle.blurple, label="Create Tournament")
     async def create_tournament(self, interaction: discord.Interaction, button: discord.Button):
         await interaction.response.defer()
-        if not await self.ctx.is_premium_guild():
+        _user = await User.get_or_none(user_id=self.ctx.author.id)
+        _is_user_premium = _user.is_premium if _user else False
+        if not (await self.ctx.is_premium_guild() or _is_user_premium):
             if await Tourney.filter(guild_id=self.ctx.guild.id).count() >= 1:
                 return await self.ctx.error(
-                    f"You need [Quotient Premium](https://quotientbot.xyz/premium) to create more than one tournament.\n"
-                    "\nBuy Prime for just ₹29 here: https://quotientbot.xyz/premium",
+                    f"You need [Potato Premium]({self.bot.config.SERVER_LINK}) to create more than one tournament.\n"
+                    f"\nGet Potato Prime here: {self.bot.config.SERVER_LINK}",
                     7,
                 )
 
@@ -169,7 +171,7 @@ class TourneyManager(EsportsBaseView):
         if not _slots:
             return await self.ctx.error(f"{member.mention} don't have any slot in any tourney of this server.", 4)
 
-        _v = QuotientView(self.ctx)
+        _v = PotatoView(self.ctx)
         _v.add_item(TourneySlotSelec(_slots))
         _v.message = await interaction.followup.send("select the slots you want to cancel", view=_v, ephemeral=True)
 
@@ -293,7 +295,7 @@ class TourneyManager(EsportsBaseView):
         await interaction.response.defer()
         # if not await self.ctx.is_premium_guild():
         #     return await self.ctx.error(
-        #         "You need Quotient Premium to download Ms Excel file containing all the "
+        #         "You need Potato Premium to download Ms Excel file containing all the "
         #         f"registration data of your tourneys.\n\n"
         #         "Buy Premium for just ₹29 here: https://quotientbot.xyz/premium",
         #         6,

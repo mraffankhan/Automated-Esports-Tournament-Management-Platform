@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 from ...views.base import EsportsBaseView
 
 if TYPE_CHECKING:
-    from core import Quotient
+    from core import Potato
 
 import discord
 
@@ -18,7 +18,7 @@ class TagCheckView(EsportsBaseView):
         super().__init__(ctx)
 
         self.ctx = ctx
-        self.bot: Quotient = ctx.bot
+        self.bot: Potato = ctx.bot
 
     async def initial_embed(self):
         records = await TagCheck.filter(guild_id=self.ctx.guild.id)

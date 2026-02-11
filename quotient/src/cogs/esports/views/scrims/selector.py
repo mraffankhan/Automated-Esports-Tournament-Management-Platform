@@ -5,7 +5,7 @@ import discord
 from aiocache import cached
 
 from core.Context import Context
-from core.views import QuotientView
+from core.views import PotatoView
 from models import Scrim
 from utils import emote, split_list
 
@@ -77,7 +77,7 @@ async def prompt_selector(ctx: Context, scrims: List[Scrim] = None, *, placehold
     if len(scrims) == 1:
         return scrims[0]
 
-    view = QuotientView(ctx)
+    view = PotatoView(ctx)
     if len(scrims) <= 25:
         view.add_item(Select(placeholder, scrims, multi=multi))
     else:
@@ -100,7 +100,7 @@ async def prompt_selector(ctx: Context, scrims: List[Scrim] = None, *, placehold
 
 
 class Select(discord.ui.Select):
-    view: QuotientView
+    view: PotatoView
 
     def __init__(self, placeholder: str, scrims: List[Scrim], multi: bool):
         _options = []

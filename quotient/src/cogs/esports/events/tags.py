@@ -3,7 +3,7 @@ from __future__ import annotations
 import typing
 
 if typing.TYPE_CHECKING:
-    from core import Quotient
+    from core import Potato
 
 import re
 from contextlib import suppress
@@ -18,7 +18,7 @@ from ..helpers import EasyMemberConverter, delete_denied_message
 
 
 class TagEvents(Cog):
-    def __init__(self, bot: Quotient):
+    def __init__(self, bot: Potato):
         self.bot = bot
 
     @Cog.listener(name="on_message")

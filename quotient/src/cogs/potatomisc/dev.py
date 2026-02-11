@@ -3,7 +3,7 @@ from __future__ import annotations
 import typing as T
 
 if T.TYPE_CHECKING:
-    from core import Quotient
+    from core import Potato
 
 import asyncio
 import datetime
@@ -13,8 +13,8 @@ from discord.ext import commands
 from prettytable import PrettyTable
 
 from core import Cog, Context
-from models import BlockIdType, BlockList, Commands
-from utils import get_ipm
+from models import BlockIdType, BlockList, Commands, Guild, User
+from utils import get_ipm, TimeText, discord_timestamp
 
 from .helper import tabulate_query
 
@@ -22,7 +22,7 @@ __all__ = ("Dev",)
 
 
 class Dev(Cog):
-    def __init__(self, bot: Quotient):
+    def __init__(self, bot: Potato):
         self.bot = bot
 
     async def cog_check(self, ctx: Context):
@@ -233,3 +233,66 @@ class Dev(Cog):
                        LIMIT 30;
                     """
             return await tabulate_query(ctx, query, [c.qualified_name for c in cog.walk_commands()], interval)
+
+    @commands.command(name="addpremium", aliases=("givepremium",))
+    async def add_premium(self, ctx: Context, target: T.Union[discord.User, int], *, duration: TimeText):
+        """
+        Give premium to a user or a server.
+        Target can be a User, User ID, or Guild ID.
+        Duration can be '30d', '1y', etc.
+        """
+        try:
+            expire = duration.dt
+
+            if isinstance(target, discord.User):
+                user, created = await User.get_or_create(user_id=target.id)
+                user.is_premium = True
+                user.premium_expire_time = expire
+                await user.save()
+                status = "Created and granted" if created else "Granted"
+                await ctx.send(f"✅ {status} premium to **{target}** until {discord_timestamp(expire)}")
+
+            elif isinstance(target, int):
+                # Check if it's a guild first
+                guild = await Guild.filter(guild_id=target).first()
+                if guild:
+                    guild.is_premium = True
+                    guild.premium_end_time = expire
+                    guild.made_premium_by = ctx.author.id
+                    await guild.save()
+                    await ctx.send(f"✅ Granted premium to Guild `{target}` until {discord_timestamp(expire)}")
+                else:
+                    # Check if it's a user or create new
+                    user, created = await User.get_or_create(user_id=target)
+                    user.is_premium = True
+                    user.premium_expire_time = expire
+                    await user.save()
+                    status = "Created and granted" if created else "Granted"
+                    await ctx.send(f"✅ {status} premium to User `{target}` until {discord_timestamp(expire)}")
+
+        except Exception as e:
+            await ctx.send(f"❌ Error: {e}")
+
+    @commands.command(name="removepremium", aliases=("delpremium", "rmpremium"))
+    async def remove_premium(self, ctx: Context, target: T.Union[discord.User, int]):
+        """
+        Remove premium from a user or a server.
+        Target can be a User, User ID, or Guild ID.
+        """
+        if isinstance(target, discord.User):
+            await User.filter(pk=target.id).update(is_premium=False, premium_expire_time=None)
+            await ctx.success(f"Removed premium from **{target}**")
+
+        elif isinstance(target, int):
+            # Check if it's a guild first
+            if await Guild.filter(pk=target).exists():
+                await Guild.filter(pk=target).update(
+                    is_premium=False, premium_end_time=None, made_premium_by=None
+                )
+                await ctx.success(f"Removed premium from Guild `{target}`")
+            # Check if it's a user
+            elif await User.filter(pk=target).exists():
+                await User.filter(pk=target).update(is_premium=False, premium_expire_time=None)
+                await ctx.success(f"Removed premium from User `{target}`")
+            else:
+                await ctx.error(f"ID `{target}` not found in Users or Guilds.")

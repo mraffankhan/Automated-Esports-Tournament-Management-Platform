@@ -6,7 +6,7 @@ from collections import defaultdict
 import discord
 from discord.ext import commands
 
-__all__ = ("QuotientRatelimiter",)
+__all__ = ("PotatoRatelimiter",)
 
 
 class CooldownByMember(commands.CooldownMapping):
@@ -19,7 +19,7 @@ class CooldownByGuild(commands.CooldownMapping):
         return member.id
 
 
-class QuotientRatelimiter:
+class PotatoRatelimiter:
     def __init__(self, rate: float, per: float):
         self.by_member = CooldownByMember.from_cooldown(rate, per, commands.BucketType.member)
         self.by_guild = CooldownByGuild.from_cooldown(rate, per, commands.BucketType.guild)

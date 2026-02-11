@@ -3,7 +3,7 @@ from __future__ import annotations
 import typing
 
 if typing.TYPE_CHECKING:
-    from core import Quotient
+    from core import Potato
 
 from contextlib import suppress
 from datetime import datetime, timedelta
@@ -16,7 +16,7 @@ from models import AutoPurge, Snipe, Timer
 
 
 class AutoPurgeEvents(Cog):
-    def __init__(self, bot: Quotient):
+    def __init__(self, bot: Potato):
         self.bot = bot
         self.bot.loop.create_task(self.delete_older_snipes())
 

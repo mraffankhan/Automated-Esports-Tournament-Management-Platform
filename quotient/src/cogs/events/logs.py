@@ -3,7 +3,7 @@ from __future__ import annotations
 import typing
 
 if typing.TYPE_CHECKING:
-    from core import Quotient
+    from core import Potato
 
 import discord
 
@@ -11,7 +11,7 @@ from core import Cog
 
 
 class LogEvents(Cog):
-    def __init__(self, bot: Quotient) -> None:
+    def __init__(self, bot: Potato) -> None:
         self.bot = bot
         # self.guild_log = discord.Webhook.from_url(self.bot.config.GUILD_LOGS, session=self.bot.session)
 

@@ -3,7 +3,7 @@ from __future__ import annotations
 import typing
 
 if typing.TYPE_CHECKING:
-    from core import Quotient
+    from core import Potato
 
 from socketio import AsyncClient
 
@@ -17,7 +17,7 @@ class SocketConnection(Cog):
     connected: bool = False
     sio: AsyncClient
 
-    def __init__(self, bot: Quotient):
+    def __init__(self, bot: Potato):
         self.bot = bot
         self.task = self.bot.loop.create_task(self.__make_connection())
 
@@ -36,7 +36,7 @@ class SocketConnection(Cog):
             self.connected = False
 
 
-async def setup(bot: Quotient):
+async def setup(bot: Potato):
     await bot.add_cog(SocketConnection(bot))
     await bot.add_cog(DashboardGate(bot))
     await bot.add_cog(SocketScrims(bot))

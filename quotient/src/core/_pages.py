@@ -8,7 +8,7 @@ import discord
 from utils.default import split_list
 
 from .Context import Context
-from .views import QuotientView
+from .views import PotatoView
 
 
 class PageLine(T.NamedTuple):
@@ -91,7 +91,7 @@ class QuoPages:
         view.message = await self.ctx.send(embed=self.embed, view=view)
 
 
-class QuoPageView(QuotientView):
+class QuoPageView(PotatoView):
     def __init__(
         self,
         ctx: Context,

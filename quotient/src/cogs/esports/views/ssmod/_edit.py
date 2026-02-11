@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, List
 
 if TYPE_CHECKING:
-    from core import Quotient
+    from core import Potato
 
 import config
 from core import Context
@@ -19,7 +19,7 @@ class SSmodEditor(EsportsBaseView):
         super().__init__(ctx)
 
         self.ctx = ctx
-        self.bot: Quotient = ctx.bot
+        self.bot: Potato = ctx.bot
 
         self.records = records
 

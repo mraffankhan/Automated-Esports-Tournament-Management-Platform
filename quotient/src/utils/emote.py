@@ -48,8 +48,8 @@ bot = "<:bot:833991659133992991>"
 bot_devloper = "<:bot_devloper:833991714637217803>"
 verified_bot = "<:verifiedbot1:833991773248290817><:verifiedbot2:833991793683070996>"
 
-check = "<:check:807913701151342592>"
-xmark = "<:xmark:807913737805234176>"
+check = "<a:check:1470636752573305016>"
+xmark = "<a:wrong:1470649315398778965>"
 loading = "<a:loading:815826684262744124>"
 VoiceChannel = "<:voice:815827186116198430>"
 TextChannel = "<:text:815827264679706624>"
@@ -80,7 +80,7 @@ green4 = "<:green4:870909062320099329>"
 green5 = "<:green5:870909062345281546>"
 
 BADGES = {
-    "creator": "<:creator:807911084069617674>",
+    "creator": "<a:creator:1470650356428963955>",
     "dev": "<:dev:807911284040531999>",
     "donator": "<a:donator:807913325861142578>",
     "messenger": "<a:messenger:807912019130974242>",

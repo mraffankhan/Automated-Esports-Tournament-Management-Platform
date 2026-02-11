@@ -20,9 +20,9 @@ __all__ = ("Context",)
 
 class Context(commands.Context["commands.Bot"], Generic[BotT]):
     if TYPE_CHECKING:
-        from .Bot import Quotient
+        from .Bot import Potato
 
-    bot: Quotient
+    bot: Potato
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
@@ -205,7 +205,7 @@ class Context(commands.Context["commands.Bot"], Generic[BotT]):
         with suppress(discord.HTTPException):
             await channel.purge(limit=limit, check=check)
 
-    async def premium_mango(self, msg: str = "This feature requires Quotient Premium.") -> Optional[discord.Message]:
+    async def premium_mango(self, msg: str = "This feature requires Potato Premium.") -> Optional[discord.Message]:
         from cogs.premium.views import PremiumView
 
         _view = PremiumView(msg)

@@ -13,7 +13,7 @@ from utils import emote, truncate_string
 from .select import prompt_slot_selection
 
 if T.TYPE_CHECKING:
-    from core import Quotient
+    from core import Potato
 
 __all__ = ("ScrimsSlotlistEditor",)
 
@@ -21,7 +21,7 @@ __all__ = ("ScrimsSlotlistEditor",)
 class ScrimsSlotlistEditor(discord.ui.View):
     message: discord.Message
 
-    def __init__(self, bot: Quotient, scrim: Scrim, slotlist_message: discord.Message):
+    def __init__(self, bot: Potato, scrim: Scrim, slotlist_message: discord.Message):
         super().__init__(timeout=30)
 
         self.bot = bot

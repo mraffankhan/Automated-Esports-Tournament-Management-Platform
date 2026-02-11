@@ -162,16 +162,16 @@ def random_thanks():
 
 tips = (
     "We have an awesome support server:\ndiscord.gg/aBM5xz6",
-    "You can set custom reactions for tourneys & scrims with Quotient Pro.",
+    "You can set custom reactions for tourneys & scrims with Potato Pro.",
     "I like your face : )",  # I really do
     "You can add a role to multiple users with `role @role @user @user2...` command.",
     "Potato can detect and verify youtube/insta/loco,etc. screenshots (`ssverify` cmd).",
-    "You can buy Quotient Pro for 29INR only at <https://quotientbot.xyz/premium>",
+    "You can buy Potato Pro for 29INR only at <https://quotientbot.xyz/premium>",
     "You can send customized embeds with `/embed` command.",
     "Scrims Slot Cancel-Claim is available for free with `slotm` command.",
     "You can create tourney groups with `tourney` command.",
     "Scrims Open & Close messages can be designed with `sm` command.",
-    "With Quotient Pro you can set custom DM message.",
+    "With Potato Pro you can set custom DM message.",
     "We also make custom bots, checkout: https://discord.gg/7bKA8kZd44 ",
 )
 
@@ -204,7 +204,7 @@ async def remind_premium(ctx):
 
     _e = discord.Embed(color=discord.Color.red(), title="Premium Ending Soon....")
     _e.description = (
-        f"Your Quotient Premium subscription is ending {discord_timestamp(guild.premium_end_time)}\n\n"
+        f"Your Potato Premium subscription is ending {discord_timestamp(guild.premium_end_time)}\n\n"
         "*Click the button to renew your subscription.*"
     )
     v = discord.ui.View(timeout=None)

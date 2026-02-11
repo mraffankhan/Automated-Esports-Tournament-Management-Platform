@@ -92,7 +92,7 @@ from .helpers import delete_denied_message, scrim_work_role
 #     async def on_c(self, payload):
 #         if not await self.ctx.is_premium_guild():
 #             return await self.ctx.error(
-#                 "This feature is available to premium servers only.\n\nYou can upgrade your server with Quotient Premium to use this.\n\n`Kindly use qperks cmd to know more.`",
+#                 "This feature is available to premium servers only.\n\nYou can upgrade your server with Potato Premium to use this.\n\n`Kindly use qperks cmd to know more.`",
 #                 delete_after=4,
 #             )
 
@@ -198,7 +198,7 @@ from .helpers import delete_denied_message, scrim_work_role
 #             "Format:\n`<Team Name> = <Kills>`\nKindly don't use special characters in team names.\n"
 #             "Separate them with comma (`,`)\n"
 #             "Example:\n"
-#             "```Team Quotient = 20,\nTeam Butterfly = 14,\nTeam Kite = 5,\nTeam 4Pandas = 8```\n"
+#             "```Team Potato = 20,\nTeam Butterfly = 14,\nTeam Kite = 5,\nTeam 4Pandas = 8```\n"
 #             "Write these according to their position in match.\n"
 #             "You have 10 minutes to answer this."
 #         )
@@ -504,7 +504,7 @@ class AutocleanMenu(menus.Menu):
         msg = await self.ctx.send(
             "**At what time should I run cleaner?**"
             "**Example: 14:00** - Registration will open at 2PM.\n\n"
-            "**Currently Quotient works according to Indian Standard Time (UTC+05:30)**"
+            "**Currently Potato works according to Indian Standard Time (UTC+05:30)**"
         )
 
         clean_time = await inputs.time_input(self.ctx, self.check, delete_after=True)
@@ -722,7 +722,7 @@ class ConfigEditMenu(menus.Menu):
         msg = await self.cembed(
             "**At what time should I open registrations?**"
             "**Example: 14:00** - Registration will open at 2PM.\n\n"
-            "**Currently Quotient works according to Indian Standard Time (UTC+05:30)**"
+            "**Currently Potato works according to Indian Standard Time (UTC+05:30)**"
         )
 
         open_time = await inputs.time_input(self.ctx, self.check, delete_after=True)

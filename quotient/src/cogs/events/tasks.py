@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from core import Quotient
+    from core import Potato
 
 from discord.ext import tasks
 
@@ -12,7 +12,7 @@ from core import Cog
 
 
 class QuoTasks(Cog):
-    def __init__(self, bot: Quotient):
+    def __init__(self, bot: Potato):
         self.bot = bot
 
         self.insert_guilds.start()

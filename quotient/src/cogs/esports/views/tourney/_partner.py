@@ -17,8 +17,8 @@ class MediaPartnerView(EsportsBaseView):
         embed = discord.Embed(title="Tournament Media Partnership", url=self.ctx.config.SERVER_LINK)
         embed.color = self.bot.color
         embed.description = (
-            "With media-partnership you can make Quotient handle media partner registrations "
-            "that means in Quotient will check if the user have registered in the partner server "
+            "With media-partnership you can make Potato handle media partner registrations "
+            "that means in Potato will check if the user have registered in the partner server "
             "and if they have, their registration will be accepted and slot will be given to them.\n\n"
         )
 
@@ -41,7 +41,7 @@ class MediaPartnerView(EsportsBaseView):
 
         if await self.tourney.media_partners.all().count() >= 1 and not await self.ctx.is_premium_guild():
             return await self.ctx.error(
-                "You need Quotient Premium to download Ms Excel file containing all the "
+                "You need Potato Premium to download Ms Excel file containing all the "
                 f"registration data of your tourneys.\n\n"
                 "Buy Premium for just ₹29 here: https://quotientbot.xyz/premium",
                 6,

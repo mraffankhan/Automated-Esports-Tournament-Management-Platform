@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, List, Tuple, Union
 from pydantic import BaseModel, validator
 
 if TYPE_CHECKING:
-    from core import Quotient
+    from core import Potato
 
 from datetime import datetime, timedelta
 
@@ -74,7 +74,7 @@ class BaseScrim(BaseModel):
     _autoclean_time = validator("autoclean_time", pre=True, allow_reuse=True)(str_to_time)
     _match_time = validator("match_time", pre=True, allow_reuse=True)(str_to_time)
 
-    async def validate_perms(self, bot: Quotient) -> Tuple[bool, Union[bool, str]]:
+    async def validate_perms(self, bot: Potato) -> Tuple[bool, Union[bool, str]]:
         v = await self.__check_bot_perms(bot)
         if not all(v):
             return v
@@ -102,7 +102,7 @@ class BaseScrim(BaseModel):
 
         return True, True
 
-    async def create_scrim(self, bot: Quotient):
+    async def create_scrim(self, bot: Potato):
         if not await Guild.filter(guild_id=self.guild_id, is_premium=True).exists():
             if await Scrim.filter(guild_id=self.guild_id).count() >= 3:
                 return False, "Cannot create more than 3 scrims without Premium."
@@ -121,7 +121,7 @@ class BaseScrim(BaseModel):
         bot.loop.create_task(scrim.setup_logs())
         return True, scrim
 
-    async def update_scrim(self, bot: Quotient):
+    async def update_scrim(self, bot: Potato):
         scrim = await Scrim.get_or_none(pk=self.id)
         if not scrim:
             return False, "Scrim not found."
@@ -145,7 +145,7 @@ class BaseScrim(BaseModel):
         bot.loop.create_task(scrim.setup_logs())
         return True, True
 
-    async def __check_bot_perms(self, bot: Quotient):
+    async def __check_bot_perms(self, bot: Potato):
         g = await bot.getch(bot.get_guild, bot.fetch_guild, self.guild_id)
 
         if g:

@@ -3,7 +3,7 @@ from __future__ import annotations
 import typing
 
 if typing.TYPE_CHECKING:
-    from core import Quotient
+    from core import Potato
 
 import inspect
 import itertools
@@ -21,8 +21,8 @@ except ImportError:
     pygit2 = None
 from discord.ext import commands
 
-from cogs.quomisc.helper import format_relative
-from core import Cog, Context, QuotientView
+from cogs.potatomisc.helper import format_relative
+from core import Cog, Context, PotatoView
 from models import Commands, Guild, User, Votes
 from utils import LinkButton, LinkType, QuoColor, checks, get_ipm, human_timedelta, truncate_string
 
@@ -31,14 +31,14 @@ from .dev import *
 from .views import MoneyButton, SetupButtonView, VoteButton
 
 
-class Quomisc(Cog, name="quomisc"):
-    def __init__(self, bot: Quotient):
+class Potatomisc(Cog, name="Potatomisc"):
+    def __init__(self, bot: Potato):
         self.bot = bot
 
     @commands.command(aliases=("src",))
     async def source(self, ctx: Context, *, search: typing.Optional[str]):
         """Refer to the source code of the bot commands."""
-        source_url = "https://github.com/quotientbot/Quotient-Bot"
+        source_url = "https://github.com/quotientbot/Potato-Bot"
 
         if search is None:
             return await ctx.send(f"<{source_url}>")
@@ -63,17 +63,12 @@ class Quomisc(Cog, name="quomisc"):
         v = discord.ui.View(timeout=None)
         v.add_item(
             discord.ui.Button(
-                style=discord.ButtonStyle.link, label="Invite Quotient (Me)", url=self.bot.config.BOT_INVITE, row=1
+                style=discord.ButtonStyle.link, label="Invite Potato (Me)", url=self.bot.config.BOT_INVITE, row=1
             )
         )
         v.add_item(
             discord.ui.Button(
-                style=discord.ButtonStyle.link, label="Invite Quotient Pro", url=self.bot.config.PRO_LINK, row=2
-            )
-        )
-        v.add_item(
-            discord.ui.Button(
-                style=discord.ButtonStyle.link, label="Join Support Server", url=self.bot.config.SERVER_LINK, row=3
+                style=discord.ButtonStyle.link, label="Join Support Server", url=self.bot.config.SERVER_LINK, row=2
             )
         )
 
@@ -82,8 +77,6 @@ class Quomisc(Cog, name="quomisc"):
     async def make_private_channel(self, ctx: Context) -> discord.TextChannel:
         support_link = f"[Support Server]({ctx.config.SERVER_LINK})"
         invite_link = f"[Invite Me]({ctx.config.BOT_INVITE})"
-        vote_link = f"[Vote]({ctx.config.WEBSITE}/vote)"
-        source = f"[Source]({ctx.config.REPOSITORY})"
 
         guild = ctx.guild
         overwrites = {
@@ -107,10 +100,10 @@ class Quomisc(Cog, name="quomisc"):
         e.add_field(
             name="**What is this channel for?**",
             inline=False,
-            value="This channel is made for Quotient to send important announcements and activities that need your attention. If anything goes wrong with any of my functionality I will notify you here. Important announcements from the developer will be sent directly here too.\n\nYou can test my commands in this channel if you like. Kindly don't delete it , some of my commands won't work without this channel.",
+        value="This channel is made for Potato to send important announcements and activities that need your attention. If anything goes wrong with any of my functionality I will notify you here. Important announcements from the developer will be sent directly here too.\n\nYou can test my commands in this channel if you like. Kindly don't delete it , some of my commands won't work without this channel.",
         )
         e.add_field(
-            name="**__Important Links__**", value=f"{support_link} | {invite_link} | {vote_link} | {source}", inline=False
+            name="**__Important Links__**", value=f"{support_link} | {invite_link}", inline=False
         )
 
         links = [LinkType("Support Server", ctx.config.SERVER_LINK)]
@@ -125,14 +118,14 @@ class Quomisc(Cog, name="quomisc"):
     @commands.bot_has_guild_permissions(manage_channels=True, manage_webhooks=True)
     async def setup_cmd(self, ctx: Context):
         """
-        Setup Quotient in the current server.
+        Setup Potato in the current server.
         This creates a private channel in the server. You can rename that if you like.
-        Quotient requires manage channels and manage wehooks permissions for this to work.
+        Potato requires manage channels and manage wehooks permissions for this to work.
         You must have manage server permission.
         """
 
         _view = SetupButtonView(ctx)
-        _view.add_item(QuotientView.tricky_invite_button())
+        _view.add_item(PotatoView.tricky_invite_button())
         record = await Guild.get(guild_id=ctx.guild.id)
 
         if record.private_ch is not None:
@@ -152,7 +145,7 @@ class Quomisc(Cog, name="quomisc"):
 
         # [`hash`](url) message (offset)
         offset = format_relative(commit_time.astimezone(timezone.utc))
-        return f"[`{short_sha2}`](https://github.com/quotientbot/Quotient-Bot/commit/{commit.hex}) {truncate_string(short,40)} ({offset})"
+        return f"[`{short_sha2}`](https://github.com/quotientbot/Potato-Bot/commit/{commit.hex}) {truncate_string(short,40)} ({offset})"
 
     def get_last_commits(self, count=3):
         if pygit2 is None:
@@ -164,7 +157,7 @@ class Quomisc(Cog, name="quomisc"):
     @commands.command(aliases=("stats",))
     @commands.cooldown(1, 10, commands.BucketType.guild)
     async def about(self, ctx: Context):
-        """Statistics of Quotient."""
+        """Statistics of Potato."""
         db_latency = await self.bot.db_latency
 
         version = pkg_resources.get_distribution("discord.py").version
@@ -252,7 +245,7 @@ class Quomisc(Cog, name="quomisc"):
     @commands.has_permissions(manage_guild=True)
     @checks.is_premium_guild()
     async def color(self, ctx: Context, *, new_color: QuoColor):
-        """Change color of Quotient's embeds"""
+        """Change color of Potato's embeds"""
         color = int(str(new_color).replace("#", ""), 16)  # The hex value of a color.
 
         self.bot.cache.guild_data[ctx.guild.id]["color"] = color
@@ -263,7 +256,7 @@ class Quomisc(Cog, name="quomisc"):
     @checks.is_premium_guild()
     @commands.has_permissions(manage_guild=True)
     async def footer(self, ctx: Context, *, new_footer: str):
-        """Change footer of embeds sent by Quotient"""
+        """Change footer of embeds sent by Potato"""
         if len(new_footer) > 50:
             return await ctx.success(f"Footer cannot contain more than 50 characters.")
 
@@ -293,7 +286,7 @@ class Quomisc(Cog, name="quomisc"):
 
     @commands.command()
     async def vote(self, ctx: Context):
-        e = self.bot.embed(ctx, title="Vote for Quotient")
+        e = self.bot.embed(ctx, title="Vote for Potato")
         e.description = (
             "**Rewards**\n"
             "<a:roocool:962749077831942276> Voter Role `12 hrs`\n"
@@ -322,14 +315,14 @@ class Quomisc(Cog, name="quomisc"):
     @commands.command()
     async def dashboard(self, ctx: Context):
         await ctx.send(
-            f"Here is the direct link to this server's dashboard:\n<https://quotientbot.xyz/dashboard/{ctx.guild.id}>"
+            f"Here is the direct link to this server's dashboard:\n<{self.bot.config.WEBSITE}/dashboard/{ctx.guild.id}>"
         )
 
     @commands.hybrid_command()
     @commands.cooldown(1, 5, commands.BucketType.user)
     async def contributors(self, ctx):
-        """People who made Quotient Possible."""
-        url = f"https://api.github.com/repos/quotientbot/Quotient-Bot/contributors"
+        """People who made Potato Possible."""
+        url = f"https://api.github.com/repos/quotientbot/Potato-Bot/contributors"
 
         e = discord.Embed(title=f"Project Contributors", color=self.bot.color, timestamp=self.bot.current_time)
         e.description = ""
@@ -346,7 +339,7 @@ class Quomisc(Cog, name="quomisc"):
         await ctx.send(embed=e)
 
 
-async def setup(bot: Quotient) -> None:
-    await bot.add_cog(Quomisc(bot))
+async def setup(bot: Potato) -> None:
+    await bot.add_cog(Potatomisc(bot))
     await bot.add_cog(Dev(bot))
-    await bot.add_cog(QuoAlerts(bot))
+    await bot.add_cog(PotatoAlerts(bot))
