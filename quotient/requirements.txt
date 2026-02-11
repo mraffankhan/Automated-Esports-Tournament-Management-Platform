@@ -1,3 +1,4 @@
+--only-binary=:all:
 aerich>=0.7.1
 aiocache[msgpack]>=0.12.1
 aiohttp-asgi>=0.5.2
