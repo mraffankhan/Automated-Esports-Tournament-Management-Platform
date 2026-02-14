@@ -8,3 +8,8 @@ config.py
 *.log
 migrations/
 .DS_Store
+
+.venv
+.venv_312
+__pycache__
+*.pyc
