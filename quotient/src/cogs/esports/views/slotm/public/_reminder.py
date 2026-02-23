@@ -25,7 +25,7 @@ class ScrimsRemind(discord.ui.Button):
         if not await self.view.bot.is_premium_guild(interaction.guild_id):
             return await interaction.followup.send(
                 "Cancel Reminder feature is only available for premium servers.\n\n"
-                f"*This server needs to purchase [Potato Premium]({self.view.bot.prime_link}) to use this feature.*",
+                f"*This server needs to purchase [Argon Premium]({self.view.bot.prime_link}) to use this feature.*",
                 ephemeral=True,
             )
 
@@ -59,7 +59,7 @@ class ScrimsRemind(discord.ui.Button):
 
         _view = ScrimSelectorView(interaction.user, scrims[:25], placeholder="Select scrims to add slot reminder")
         await interaction.followup.send(
-            "Select 1 or multiple scrims to set reminder\n\n*By selecting scrims, you confirm that Potato can "
+            "Select 1 or multiple scrims to set reminder\n\n*By selecting scrims, you confirm that Argon can "
             "DM you when any slot is available of the selected scrims.*",
             view=_view,
             ephemeral=True,
@@ -75,7 +75,7 @@ class ScrimsRemind(discord.ui.Button):
             await _.slot_reminders.add(_r)
 
         _e = discord.Embed(
-            color=0x00FFB3, description=f"Successfully created reminder for {plural(scrims):scrim|scrims}."
+            color=self.view.bot.cache.guild_color(interaction.guild_id), description=f"Successfully created reminder for {plural(scrims):scrim|scrims}."
         )
 
         await interaction.followup.send(embed=_e, ephemeral=True)

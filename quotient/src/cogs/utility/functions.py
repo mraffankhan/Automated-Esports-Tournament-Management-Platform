@@ -2,7 +2,7 @@ from discord.ext import commands
 
 from core import Context
 from models import Tag
-from utils.converters import QuoMember
+from utils.converters import ArgonMember
 
 
 class TagName(commands.clean_content):
@@ -124,7 +124,7 @@ async def guild_tag_stats(ctx: Context):
     await ctx.send(embed=e, embed_perms=True)
 
 
-async def member_tag_stats(ctx: Context, member: QuoMember):
+async def member_tag_stats(ctx: Context, member: ArgonMember):
     e = ctx.bot.embed(ctx)
     e.set_author(name=str(member), icon_url=member.display_avatar.url)
 

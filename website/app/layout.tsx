@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "POTATO BOT | Esports Management",
-  description: "Manage your esports tournaments and teams with Potato Bot",
+  title: "ARGON BOT | Esports Management",
+  description: "Manage your esports tournaments and teams with Argon Bot",
 };
 
 export default function RootLayout({
@@ -27,7 +27,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-black text-cyan-400 min-h-screen flex flex-col`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-black text-primary min-h-screen flex flex-col`}
       >
         <Navbar />
         <main className="flex-grow pt-16">

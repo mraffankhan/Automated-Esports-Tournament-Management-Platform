@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, List, Tuple, Union
 from pydantic import BaseModel, validator
 
 if TYPE_CHECKING:
-    from core import Potato
+    from core import Argon
 
 from datetime import datetime, timedelta
 
@@ -39,7 +39,7 @@ def str_to_time(_t: str = None):
 class BaseScrim(BaseModel):
     id: int = None
     guild_id: int
-    name: str = "Potato-Scrims"
+    name: str = "Argon-Scrims"
     registration_channel_id: int
     slotlist_channel_id: int
     role_id: int
@@ -74,7 +74,7 @@ class BaseScrim(BaseModel):
     _autoclean_time = validator("autoclean_time", pre=True, allow_reuse=True)(str_to_time)
     _match_time = validator("match_time", pre=True, allow_reuse=True)(str_to_time)
 
-    async def validate_perms(self, bot: Potato) -> Tuple[bool, Union[bool, str]]:
+    async def validate_perms(self, bot: Argon) -> Tuple[bool, Union[bool, str]]:
         v = await self.__check_bot_perms(bot)
         if not all(v):
             return v
@@ -83,18 +83,18 @@ class BaseScrim(BaseModel):
 
         reg_channel = bot.get_channel(self.registration_channel_id)
         if not reg_channel:
-            return False, "Potato can't see your registration channel. Give Perms."
+            return False, "Argon can't see your registration channel. Give Perms."
 
         _p = reg_channel.permissions_for(guild.me)
         if not all((_p.manage_channels, _p.manage_permissions, _p.manage_messages)):
-            return False, "Potato can't manage this registration channel. Give Perms."
+            return False, "Argon can't manage this registration channel. Give Perms."
 
         role = guild.get_role(self.role_id)
         if not role:
-            return False, "Potato couldn't find your sucess role."
+            return False, "Argon couldn't find your sucess role."
 
         if role >= guild.me.top_role:
-            return False, "Drag Quotent role above your success role."
+            return False, "Drag Argon role above your success role."
 
         _p = role.permissions
         if any((_p.administrator, _p.manage_channels, _p.manage_roles, _p.kick_members, _p.ban_members)):
@@ -102,7 +102,7 @@ class BaseScrim(BaseModel):
 
         return True, True
 
-    async def create_scrim(self, bot: Potato):
+    async def create_scrim(self, bot: Argon):
         if not await Guild.filter(guild_id=self.guild_id, is_premium=True).exists():
             if await Scrim.filter(guild_id=self.guild_id).count() >= 3:
                 return False, "Cannot create more than 3 scrims without Premium."
@@ -121,7 +121,7 @@ class BaseScrim(BaseModel):
         bot.loop.create_task(scrim.setup_logs())
         return True, scrim
 
-    async def update_scrim(self, bot: Potato):
+    async def update_scrim(self, bot: Argon):
         scrim = await Scrim.get_or_none(pk=self.id)
         if not scrim:
             return False, "Scrim not found."
@@ -145,7 +145,7 @@ class BaseScrim(BaseModel):
         bot.loop.create_task(scrim.setup_logs())
         return True, True
 
-    async def __check_bot_perms(self, bot: Potato):
+    async def __check_bot_perms(self, bot: Argon):
         g = await bot.getch(bot.get_guild, bot.fetch_guild, self.guild_id)
 
         if g:
@@ -155,9 +155,9 @@ class BaseScrim(BaseModel):
             return False, "Couldn't find your server. Try again in a few minutes."
 
         if not all((g_perms.manage_channels, g_perms.manage_roles, g_perms.manage_messages)):
-            return False, "Potato needs manage channels, manage roles permission."
+            return False, "Argon needs manage channels, manage roles permission."
 
         if not all((g_perms.add_reactions, g_perms.embed_links)):
-            return False, "Potato needs add reacions & embed links permission."
+            return False, "Argon needs add reacions & embed links permission."
 
         return True, True

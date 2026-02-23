@@ -20,9 +20,9 @@ __all__ = ("Context",)
 
 class Context(commands.Context["commands.Bot"], Generic[BotT]):
     if TYPE_CHECKING:
-        from .Bot import Potato
+        from .Bot import Argon
 
-    bot: Potato
+    bot: Argon
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
@@ -63,7 +63,7 @@ class Context(commands.Context["commands.Bot"], Generic[BotT]):
         An interactive reaction confirmation dialog.
         """
 
-        embed = discord.Embed(description=message, color=self.bot.color)
+        embed = discord.Embed(description=message, color=self.guild_color)
         if title is not None:
             embed.title = title
 
@@ -109,7 +109,7 @@ class Context(commands.Context["commands.Bot"], Generic[BotT]):
             return await self.reply(
                 embed=discord.Embed(
                     description=f"{utils.check} | {message}",
-                    color=self.bot.color,
+                    color=self.guild_color,
                 ),
                 delete_after=delete_after,
                 **kwargs,
@@ -123,7 +123,7 @@ class Context(commands.Context["commands.Bot"], Generic[BotT]):
             image = kwargs.pop("image", None)
             footer = kwargs.pop("footer", None)
 
-            embed = discord.Embed(description=message, color=self.bot.color)
+            embed = discord.Embed(description=message, color=self.guild_color)
             if image:
                 embed.set_image(url=image)
             if footer:
@@ -205,14 +205,14 @@ class Context(commands.Context["commands.Bot"], Generic[BotT]):
         with suppress(discord.HTTPException):
             await channel.purge(limit=limit, check=check)
 
-    async def premium_mango(self, msg: str = "This feature requires Potato Premium.") -> Optional[discord.Message]:
+    async def premium_mango(self, msg: str = "This feature requires Argon Premium.") -> Optional[discord.Message]:
         from cogs.premium.views import PremiumView
 
-        _view = PremiumView(msg)
+        _view = PremiumView(self.guild_color, msg)
         return await self.send(embed=_view.premium_embed, view=_view, embed_perms=True)
 
     @staticmethod
     def get_dm_view(msg: str) -> discord.ui.View:
-        from .views import QuoDMView
+        from .views import ArgonDMView
 
-        return QuoDMView(label=msg)
+        return ArgonDMView(label=msg)

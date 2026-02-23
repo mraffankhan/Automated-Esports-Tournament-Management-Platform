@@ -8,7 +8,7 @@ from models import Guild, Tourney
 from ...views.base import EsportsBaseView
 
 if TYPE_CHECKING:
-    from core import Potato
+    from core import Argon
 
 import asyncio
 
@@ -18,7 +18,7 @@ from humanize import precisedelta
 
 import config
 from core import Context
-from utils import QuoRole, emote, get_chunks, inputs, truncate_string
+from utils import ArgonRole, emote, get_chunks, inputs, truncate_string
 
 
 class TourneyGroupManager(EsportsBaseView):
@@ -28,11 +28,11 @@ class TourneyGroupManager(EsportsBaseView):
         self.ctx = ctx
         self.tourney = tourney
         self.size = size
-        self.bot: Potato = ctx.bot
+        self.bot: Argon = ctx.bot
 
     @staticmethod
-    def initial_embed(tourney: Tourney, size: int) -> discord.Embed:
-        e = discord.Embed(color=0x00FFB3, title="Tourney Group Manager")
+    def initial_embed(ctx: Context, tourney: Tourney, size: int) -> discord.Embed:
+        e = discord.Embed(color=ctx.guild_color, title="Tourney Group Manager")
         e.description = (
             f"**[Tourney Slot Manager]({config.SERVER_LINK})** ─ {tourney}\n"
             f"**Group Size: `{size}`**\n\n"
@@ -69,7 +69,7 @@ class TourneyGroupManager(EsportsBaseView):
             _list.append(e)
 
         _view = GroupListView(self.ctx, tourney=self.tourney, size=self.size, channel=_channel, embeds=_list)
-        _view.message = await interaction.followup.send(embed=GroupListView.initial_embed(self.tourney), view=_view)
+        _view.message = await interaction.followup.send(embed=GroupListView.initial_embed(self.ctx, self.tourney), view=_view)
 
     @discord.ui.button(custom_id="give_group_roles", label="Give Roles")
     async def give_group_roles(self, interaction: discord.Interaction, button: discord.Button):
@@ -89,7 +89,7 @@ class TourneyGroupManager(EsportsBaseView):
             f"Write the group number and the name of group role.\n"
             "**Format:** `Group Number, Name of Group Role`\n\n"
             "Note that you can also mention the role instead of name to give it to users, "
-            "or just write its name, if there is no role of that name, Potato "
+            "or just write its name, if there is no role of that name, Argon "
             "will create the role and give it to group leaders.\n\n"
             "**Example:**```1, @group_role\n2, Group role\n3, @3rd_group```\n"
             "*Enter upto 15 roles at a time.*",
@@ -134,7 +134,7 @@ class TourneyGroupManager(EsportsBaseView):
             group = int(group)
 
             try:
-                role = await QuoRole().convert(self.ctx, role := role.strip())
+                role = await ArgonRole().convert(self.ctx, role := role.strip())
                 _e.description += f"{emote.check} {role.mention} Found...\n"
                 await m.edit(embed=_e)
 
@@ -192,20 +192,20 @@ class GroupListView(EsportsBaseView):
         super().__init__(ctx, timeout=30, title="Group List Publisher")
 
         self.ctx = ctx
-        self.bot: Potato = ctx.bot
+        self.bot: Argon = ctx.bot
         self.tourney = tourney
         self.size = size
         self.channel = channel
         self.embeds = embeds
 
     @staticmethod
-    def initial_embed(tourney: Tourney) -> discord.Embed:
+    def initial_embed(ctx: Context, tourney: Tourney) -> discord.Embed:
         _e = discord.Embed(
-            color=0x00FFB3,
+            color=ctx.guild_color,
             description=(
                 f"**How would you like to publish the group list of {tourney}?**\n\n"
                 "• `Webhook` will create a webhook in the channel and will send group embeds with your server's logo and name.\n"
-                "• `Bot Option` will just make Potato send the embeds.\n\n"
+                "• `Bot Option` will just make Argon send the embeds.\n\n"
                 "*Webhook Option is more cool.*"
             ),
         )
@@ -219,12 +219,12 @@ class GroupListView(EsportsBaseView):
         if not await self.ctx.is_premium_guild():
             from cogs.premium.views import PremiumView
 
-            _view = PremiumView()
+            _view = PremiumView(self.bot.cache.guild_color(self.ctx.guild.id))
             return await interaction.followup.send(embed=_view.premium_embed, view=_view)
 
         try:
             _webhook = await self.channel.create_webhook(
-                name="Potato Group List", reason=f"Created by {self.ctx.author} to send group list"
+                name="Argon Group List", reason=f"Created by {self.ctx.author} to send group list"
             )
         except Exception as e:
             return await self.error_embed(e)

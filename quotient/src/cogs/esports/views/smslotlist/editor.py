@@ -13,7 +13,7 @@ from utils import emote, truncate_string
 from .select import prompt_slot_selection
 
 if T.TYPE_CHECKING:
-    from core import Potato
+    from core import Argon
 
 __all__ = ("ScrimsSlotlistEditor",)
 
@@ -21,7 +21,7 @@ __all__ = ("ScrimsSlotlistEditor",)
 class ScrimsSlotlistEditor(discord.ui.View):
     message: discord.Message
 
-    def __init__(self, bot: Potato, scrim: Scrim, slotlist_message: discord.Message):
+    def __init__(self, bot: Argon, scrim: Scrim, slotlist_message: discord.Message):
         super().__init__(timeout=30)
 
         self.bot = bot
@@ -42,7 +42,7 @@ class ScrimsSlotlistEditor(discord.ui.View):
             return await self.message.edit(view=self)
 
     def initial_embed(self) -> discord.Embed:
-        _e = discord.Embed(color=0x00FFB3, description="Choose an option below to edit the slotlist.")
+        _e = discord.Embed(color=self.bot.cache.guild_color(self.scrim.guild_id), description="Choose an option below to edit the slotlist.")
         return _e
 
     @discord.ui.button(style=discord.ButtonStyle.success, label="Change Team", custom_id="smslot_change_team")
@@ -54,7 +54,7 @@ class ScrimsSlotlistEditor(discord.ui.View):
             return await interaction.followup.send("No slot available to replace.", ephemeral=True)
         _v = await prompt_slot_selection(__slots, placeholder="Select the slot to change...")
 
-        _e = discord.Embed(color=0x00FFB3, description="Kindly choose a slot from the dropdown.")
+        _e = discord.Embed(color=self.bot.cache.guild_color(self.scrim.guild_id), description="Kindly choose a slot from the dropdown.")
 
         await interaction.followup.send(embed=_e, view=_v, ephemeral=True)
 
@@ -129,7 +129,7 @@ class ScrimsSlotlistEditor(discord.ui.View):
 
             await AssignedSlot.filter(pk=slot_id).delete()
 
-            _e = discord.Embed(color=0x00FFB3, description="Team Removed from slotlist.")
+            _e = discord.Embed(color=self.bot.cache.guild_color(self.scrim.guild_id), description="Team Removed from slotlist.")
 
             await interaction.followup.send(embed=_e, ephemeral=True)
 

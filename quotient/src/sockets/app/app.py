@@ -3,13 +3,13 @@ from __future__ import annotations
 import typing
 
 if typing.TYPE_CHECKING:
-    from core import Potato
+    from core import Argon
 
 import socketio
 
 
-class QuoSocket(socketio.AsyncClient):
-    bot: Potato
+class ArgonSocket(socketio.AsyncClient):
+    bot: Argon
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -32,7 +32,7 @@ class QuoSocket(socketio.AsyncClient):
         return data
 
 
-sio = QuoSocket(logger=True, engineio_logger=True)
+sio = ArgonSocket(logger=True, engineio_logger=True)
 ignored = ("update_total_votes", "update_votes_leaderboard")
 
 
@@ -41,7 +41,7 @@ async def catch_all(event, data):
     if event in ignored:
         return
 
-    data = QuoSocket.int_parse(data)
+    data = ArgonSocket.int_parse(data)
 
     r, e, u = event.split("__")
     data["user__id"] = u

@@ -14,8 +14,8 @@ class Guild(BaseDbModel):
 
     guild_id = fields.BigIntField(pk=True, index=True)
 
-    prefix = fields.CharField(default="p", max_length=5)
-    embed_color = fields.IntField(default=65459, null=True)
+    prefix = fields.CharField(default="a", max_length=5)
+    embed_color = fields.IntField(default=11225297, null=True)
     embed_footer = fields.TextField(default=config.FOOTER)
 
     tag_enabled_for_everyone = fields.BooleanField(default=True)  # ye naam maine ni rkha sachi

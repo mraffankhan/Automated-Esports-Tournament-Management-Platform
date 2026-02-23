@@ -34,7 +34,7 @@ class SetupWizard(EsportsBaseView):
         if not self.record:
             self.record = SSVerify(guild_id=self.ctx.guild.id)
 
-        _e = discord.Embed(color=0x00FFB3, title="Enter details & Press Save", url=config.SERVER_LINK)
+        _e = discord.Embed(color=self.ctx.bot.cache.guild_color(self.ctx.guild.id), title="Enter details & Press Save", url=config.SERVER_LINK)
 
         fields = {
             "Channel": getattr(self.record.channel, "mention", "`Not-Set`"),

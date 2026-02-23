@@ -50,7 +50,7 @@ class ScrimDesign(ScrimsView):
 
     @property
     async def initial_embed(self):
-        _e = discord.Embed(color=0x00FFB3)
+        _e = discord.Embed(color=self.ctx.bot.cache.guild_color(self.ctx.guild.id))
         _e.description = (
             f"[**Scrims - Design Settings - {self.record}**]({self.ctx.config.SERVER_LINK})\n"
             "What do you want to design today?\n\n"

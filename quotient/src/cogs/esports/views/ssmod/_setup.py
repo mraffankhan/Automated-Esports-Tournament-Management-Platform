@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from core import Potato
+    from core import Argon
 
 import discord
 
@@ -21,7 +21,7 @@ class SsmodMainView(EsportsBaseView):
         super().__init__(ctx, timeout=90, title="Screenshots Manager")
 
         self.ctx = ctx
-        self.bot: Potato = ctx.bot
+        self.bot: Argon = ctx.bot
 
     async def initial_message(self):
         records = await SSVerify.filter(guild_id=self.ctx.guild.id).order_by("id")
@@ -32,7 +32,7 @@ class SsmodMainView(EsportsBaseView):
 
         _sm = "\n".join(_to_show) if _to_show else "```Click Setup button for new ssverify.```"
 
-        _e = discord.Embed(color=0x00FFB3, title=f"Advanced Screenshots Manager", url=self.ctx.config.SERVER_LINK)
+        _e = discord.Embed(color=self.ctx.bot.cache.guild_color(self.ctx.guild.id), title=f"Advanced Screenshots Manager", url=self.ctx.config.SERVER_LINK)
         _e.set_thumbnail(url=self.bot.user.display_avatar.url)
         _e.description = _sm
         _e.set_footer(text="When in doubt, press '?' :)", icon_url=getattr(self.ctx.author, "url", None))
@@ -44,7 +44,7 @@ class SsmodMainView(EsportsBaseView):
 
         if not await self.ctx.is_premium_guild():
             if await SSVerify.filter(guild_id=self.ctx.guild.id).exists():
-                return await self.ctx.premium_mango("You need Potato Premium to setup more than 1 ssverify.")
+                return await self.ctx.premium_mango("You need Argon Premium to setup more than 1 ssverify.")
 
         view = SetupWizard(self.ctx)
         _e = view.initial_message()
@@ -61,9 +61,9 @@ class SsmodMainView(EsportsBaseView):
 
     @discord.ui.button(emoji="❔", custom_id="info_ssmod_button")
     async def stop_ssmod_button(self, interaction: discord.Interaction, button: discord.Button):
-        _e = discord.Embed(color=0x00FFB3, title="Screenshots Manager FAQ", url=self.ctx.config.SERVER_LINK)
+        _e = discord.Embed(color=self.ctx.bot.cache.guild_color(self.ctx.guild.id), title="Screenshots Manager FAQ", url=self.ctx.config.SERVER_LINK)
         _e.description = (
-            "**How to setup Potato ssverification?**\n"
+            "**How to setup Argon ssverification?**\n"
             "> Click the `Setup ssverify` button to set up ssverify.\n\n"
             "**What is Custom Filter?**\n"
             "> Custom Filter allows you to set ssverification for any app or for any type of ss.\n\n"

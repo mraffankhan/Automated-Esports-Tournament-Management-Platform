@@ -7,8 +7,10 @@ import discord
 
 from utils.default import split_list
 
-from .Context import Context
-from .views import PotatoView
+from .views import ArgonView
+
+if T.TYPE_CHECKING:
+    from .Context import Context
 
 
 class PageLine(T.NamedTuple):
@@ -17,10 +19,10 @@ class PageLine(T.NamedTuple):
     # embed: T.Optional[discord.Embed] = None
 
 
-class QuoPages:
+class ArgonPages:
     def __init__(
         self,
-        ctx: Context,
+        ctx: "Context",
         *,
         per_page=10,
         timeout=60.0,
@@ -76,7 +78,7 @@ class QuoPages:
                 _: T.List[PageLine]
                 self.pages.append(PageLine("".join(ent.line for ent in _), _[0].image))
 
-        view = QuoPageView(
+        view = ArgonPageView(
             self.ctx,
             pages=self.pages,
             items=self.items,
@@ -91,10 +93,10 @@ class QuoPages:
         view.message = await self.ctx.send(embed=self.embed, view=view)
 
 
-class QuoPageView(PotatoView):
+class ArgonPageView(ArgonView):
     def __init__(
         self,
-        ctx: Context,
+        ctx: "Context",
         *,
         pages: T.List[PageLine],
         items: T.Optional[T.List[discord.ui.Item]] = None,

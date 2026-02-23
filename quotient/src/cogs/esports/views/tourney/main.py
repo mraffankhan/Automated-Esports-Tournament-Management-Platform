@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 from models.esports.tourney import TMSlot
 
 if TYPE_CHECKING:
-    from core import Potato
+    from core import Argon
 
 import asyncio
 import re
@@ -15,7 +15,7 @@ import discord
 from discord import ButtonStyle
 from tortoise.expressions import Q
 
-from core import Context, PotatoView
+from core import Context, ArgonView
 from models import Tourney, User
 from utils import emote, member_input, plural, truncate_string
 
@@ -33,7 +33,7 @@ class TourneyManager(EsportsBaseView):
     def __init__(self, ctx: Context):
         super().__init__(ctx, timeout=100, name="Tourney Manager")
         self.ctx = ctx
-        self.bot: Potato = ctx.bot
+        self.bot: Argon = ctx.bot
 
     async def initial_embed(self) -> discord.Embed:
         to_show = [
@@ -42,12 +42,12 @@ class TourneyManager(EsportsBaseView):
         ]
 
         _e = discord.Embed(
-            color=self.bot.color, title="Potato Smart Tournament Manager", url=self.bot.config.SERVER_LINK
+            color=self.bot.color, title="Argon Smart Tournament Manager", url=self.bot.config.SERVER_LINK
         )
         _e.description = "\n".join(to_show) if to_show else "```Click Create button for new tourney.```"
         _e.set_thumbnail(url=self.ctx.guild.me.display_avatar.url)
         _e.set_footer(
-            text="Potato Prime allows unlimited tournaments.",
+            text="Argon Prime allows unlimited tournaments.",
             icon_url=getattr(self.ctx.author.display_avatar, "url", None),
         )
 
@@ -65,8 +65,8 @@ class TourneyManager(EsportsBaseView):
         if not (await self.ctx.is_premium_guild() or _is_user_premium):
             if await Tourney.filter(guild_id=self.ctx.guild.id).count() >= 1:
                 return await self.ctx.error(
-                    f"You need [Potato Premium]({self.bot.config.SERVER_LINK}) to create more than one tournament.\n"
-                    f"\nGet Potato Prime here: {self.bot.config.SERVER_LINK}",
+                    f"You need [Argon Premium]({self.bot.config.SERVER_LINK}) to create more than one tournament.\n"
+                    f"\nGet Argon Prime here: {self.bot.config.SERVER_LINK}",
                     7,
                 )
 
@@ -171,7 +171,7 @@ class TourneyManager(EsportsBaseView):
         if not _slots:
             return await self.ctx.error(f"{member.mention} don't have any slot in any tourney of this server.", 4)
 
-        _v = PotatoView(self.ctx)
+        _v = ArgonView(self.ctx)
         _v.add_item(TourneySlotSelec(_slots))
         _v.message = await interaction.followup.send("select the slots you want to cancel", view=_v, ephemeral=True)
 
@@ -230,7 +230,7 @@ class TourneyManager(EsportsBaseView):
             last_slot = await tourney.assigned_slots.order_by("-num").first()
             slot = TMSlot(leader_id=leader.id, team_name=team_name, num=last_slot.num + 1 if last_slot else 1)
 
-            _e = discord.Embed(color=0x00FFB3)
+            _e = discord.Embed(color=self.bot.cache.guild_color(self.ctx.guild.id))
             _e.description = f"**{slot.num}) NAME: {slot.team_name.upper()}**\n"
 
             _e.set_footer(
@@ -295,9 +295,9 @@ class TourneyManager(EsportsBaseView):
         await interaction.response.defer()
         # if not await self.ctx.is_premium_guild():
         #     return await self.ctx.error(
-        #         "You need Potato Premium to download Ms Excel file containing all the "
+        #         "You need Argon Premium to download Ms Excel file containing all the "
         #         f"registration data of your tourneys.\n\n"
-        #         "Buy Premium for just ₹29 here: https://quotientbot.xyz/premium",
+        #         "Buy Premium for just ₹29 here: https://argonbot.xyz/premium",
         #         6,
         #     )
 

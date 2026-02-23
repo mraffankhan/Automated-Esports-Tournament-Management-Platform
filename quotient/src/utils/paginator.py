@@ -51,7 +51,7 @@ class Pages:
         return len(self.pages)
 
 
-class QuoPaginator:
+class ArgonPaginator:
     def __init__(self, ctx, *, per_page=10, timeout=60.0, title=None, show_page_count=True):
         self.ctx = ctx
         self.per_page = per_page

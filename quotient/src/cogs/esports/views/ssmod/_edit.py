@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, List
 
 if TYPE_CHECKING:
-    from core import Potato
+    from core import Argon
 
 import config
 from core import Context
@@ -19,7 +19,7 @@ class SSmodEditor(EsportsBaseView):
         super().__init__(ctx)
 
         self.ctx = ctx
-        self.bot: Potato = ctx.bot
+        self.bot: Argon = ctx.bot
 
         self.records = records
 
@@ -51,7 +51,7 @@ class SSmodEditor(EsportsBaseView):
         await record.refresh_from_db()
         self.records[_index] = record
 
-        _e = discord.Embed(color=0x00FFB3, title=f"Screenshots Manager - Edit Config", url=config.SERVER_LINK)
+        _e = discord.Embed(color=self.ctx.bot.cache.guild_color(self.ctx.guild.id), title=f"Screenshots Manager - Edit Config", url=config.SERVER_LINK)
 
         fields = {
             "Channel": getattr(record.channel, "mention", "`deleted-channel`"),

@@ -48,7 +48,7 @@ bot = "<:bot:833991659133992991>"
 bot_devloper = "<:bot_devloper:833991714637217803>"
 verified_bot = "<:verifiedbot1:833991773248290817><:verifiedbot2:833991793683070996>"
 
-check = "<a:check:1470636752573305016>"
+check = "<a:argon_che:1472164820483571824>"
 xmark = "<a:wrong:1470649315398778965>"
 loading = "<a:loading:815826684262744124>"
 VoiceChannel = "<:voice:815827186116198430>"
@@ -57,6 +57,8 @@ category = "<:category:815831557507776583>"
 pain = "<:blobpain:831771526368985098>"
 settings_yes = "<:settings_mark_off:815169498319159337><:settings_check_on:815169424566517791>"
 settings_no = "<:set_no_on:815169465259786241><:set_yes_off:815169360393404436>"
+
+arrow = "<a:argon_arrow:1472207133864099880>"
 
 
 pstop = "<:stop:829602188593856574>"

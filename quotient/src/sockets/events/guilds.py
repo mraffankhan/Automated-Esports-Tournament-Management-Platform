@@ -5,7 +5,7 @@ import typing as T
 import discord
 
 if T.TYPE_CHECKING:
-    from core import Potato
+    from core import Argon
 
 from core import Cog
 from models import Guild
@@ -16,7 +16,7 @@ __all__ = ("SockGuild",)
 
 
 class SockGuild(Cog):
-    def __init__(self, bot: Potato):
+    def __init__(self, bot: Argon):
         self.bot = bot
 
     @Cog.listener()

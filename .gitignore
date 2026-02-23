@@ -4,6 +4,9 @@ __pycache__/
 .env
 .env.local
 .venv/
+.venv*/
+venv/
+venv*/
 .input/
 .output/
 dist/
@@ -11,3 +14,5 @@ build/
 .DS_Store
 .vscode/
 .idea/
+quotient.zip
+create_zip.py

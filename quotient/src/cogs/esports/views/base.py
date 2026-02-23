@@ -3,7 +3,7 @@ from __future__ import annotations
 import typing
 
 if typing.TYPE_CHECKING:
-    from core import Potato
+    from core import Argon
 
 from contextlib import suppress
 
@@ -21,7 +21,7 @@ class EsportsBaseView(discord.ui.View):
 
         self.ctx = ctx
         self.title = kwargs.get("title", "")
-        self.bot: Potato = ctx.bot
+        self.bot: Argon = ctx.bot
         self.check = lambda msg: msg.channel == self.ctx.channel and msg.author == self.ctx.author
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:

@@ -4,7 +4,7 @@ import typing
 from collections import defaultdict
 
 if typing.TYPE_CHECKING:
-    from core import Potato
+    from core import Argon
 
 import re
 from contextlib import suppress
@@ -19,14 +19,14 @@ from models import Guild
 
 class MentionLimits(defaultdict):
     def __missing__(self, key):
-        r = self[key] = cooldown.PotatoRatelimiter(2, 12)
+        r = self[key] = cooldown.ArgonRatelimiter(2, 12)
         return r
 
 
 class MainEvents(Cog, name="Main Events"):
-    def __init__(self, bot: Potato) -> None:
+    def __init__(self, bot: Argon) -> None:
         self.bot = bot
-        self.mentions_limiter = MentionLimits(cooldown.PotatoRatelimiter)
+        self.mentions_limiter = MentionLimits(cooldown.ArgonRatelimiter)
 
     # incomplete?, I know
     @Cog.listener()
@@ -39,6 +39,40 @@ class MainEvents(Cog, name="Main Events"):
                 "footer": g.embed_footer or config.FOOTER,
             }
             self.bot.loop.create_task(guild.chunk())
+
+        # Check inviter and DM if not in support server
+        try:
+            async for entry in guild.audit_logs(limit=1, action=discord.AuditLogAction.bot_add):
+                inviter = entry.user
+                if inviter.bot:
+                    return
+
+                should_invite = True
+                support_server = self.bot.get_guild(config.SERVER_ID)
+                if support_server:
+                    member = support_server.get_member(inviter.id)
+                    if member:
+                        should_invite = False
+                
+                if should_invite:
+                    with suppress(discord.Forbidden):
+                        embed = discord.Embed(
+                            title=f"Thanks for adding me to {guild.name}!",
+                            description=(
+                                f"Hey {inviter.mention}, I noticed you aren't in my support server yet.\n"
+                                "Join us to get updates, support, and meet the community!"
+                            ),
+                            color=config.COLOR
+                        )
+                        embed.set_footer(text=config.FOOTER)
+                        
+                        view = discord.ui.View()
+                        view.add_item(discord.ui.Button(label="Accept Invite", url=config.SERVER_LINK, style=discord.ButtonStyle.link))
+                        
+                        await inviter.send(embed=embed, view=view)
+                break
+        except (discord.Forbidden, discord.HTTPException):
+            pass
 
     @Cog.listener()
     async def on_message(self, message: discord.Message) -> None:

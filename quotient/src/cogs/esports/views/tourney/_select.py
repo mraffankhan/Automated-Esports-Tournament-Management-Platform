@@ -4,13 +4,13 @@ import typing as T
 
 import discord
 
-from core import PotatoView
+from core import ArgonView
 from models import TMSlot, Tourney
 from utils import emote
 
 
 class TourneySelector(discord.ui.Select):
-    view: PotatoView
+    view: ArgonView
 
     def __init__(self, placeholder: str, tourneys: T.List[Tourney]):
         _options = []
@@ -33,7 +33,7 @@ class TourneySelector(discord.ui.Select):
 
 
 class TourneySlotSelec(discord.ui.Select):
-    view: PotatoView
+    view: ArgonView
 
     def __init__(self, slots: T.List[TMSlot], placeholder: str = "Select a slot to cancel"):
         _options = []

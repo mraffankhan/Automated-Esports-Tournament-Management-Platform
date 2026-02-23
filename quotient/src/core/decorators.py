@@ -19,13 +19,13 @@ class right_bot_check:
         @wraps(fn)
         async def wrapper(*args: Any, **kwargs: Any):
             if TYPE_CHECKING:
-                from .Bot import Potato
+                from .Bot import Argon
 
             if isinstance(args[0], Cog):
-                bot: Potato = args[0].bot
+                bot: Argon = args[0].bot
 
             else:
-                bot: Potato = args[0]  # type: ignore
+                bot: Argon = args[0]  # type: ignore
 
             with suppress(AttributeError):
                 for arg in args:

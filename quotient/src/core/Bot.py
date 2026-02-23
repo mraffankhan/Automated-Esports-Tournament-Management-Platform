@@ -18,6 +18,7 @@ from discord import AllowedMentions, Intents
 from discord.ext import commands
 from lru import LRU
 from tortoise import Tortoise
+from redis.asyncio import Redis
 
 import config as cfg
 import constants as csts
@@ -37,13 +38,13 @@ os.environ["JISHAKU_NO_UNDERSCORE"] = "True"
 os.environ["JISHAKU_NO_DM_TRACEBACK"] = "True"
 os.environ["OMP_THREAD_LIMIT"] = "1"
 
-__all__ = ("Potato", "bot")
+__all__ = ("Argon", "bot")
 
 
-on_startup: List[Callable[["Potato"], Coroutine]] = []
+on_startup: List[Callable[["Argon"], Coroutine]] = []
 
 
-class Potato(commands.AutoShardedBot):
+class Argon(commands.AutoShardedBot):
     def __init__(self, **kwargs: Any) -> None:
         super().__init__(
             command_prefix=self.get_prefix,
@@ -54,7 +55,7 @@ class Potato(commands.AutoShardedBot):
             help_command=HelpCommand(),
             chunk_guilds_at_startup=False,
             allowed_mentions=AllowedMentions(everyone=False, roles=False, replied_user=True, users=True),
-            activity=discord.Streaming(name="phelp | psetup", url="https://twitch.tv/quotient"),
+            activity=discord.Streaming(name="ahelp | asetup", url="https://twitch.tv/argon"),
             proxy=getattr(cfg, "PROXY_URI", None),
             **kwargs,
         )
@@ -98,6 +99,16 @@ class Potato(commands.AutoShardedBot):
         async for record in TGroupList.all():
             self.add_view(GroupRefresh(), message_id=record.message_id)
 
+        # Ticket persistent views
+        from cogs.ticket import TicketPanelView, TicketControlView
+        from models import TicketConfig
+
+        async for tc in TicketConfig.filter(message_id__isnull=False):
+            self.add_view(TicketPanelView(), message_id=tc.message_id)
+
+        # TicketControlView uses globally unique custom_ids, register once
+        self.add_view(TicketControlView())
+
         print("Persistent views: Loaded them too ")
 
     @on_startup.append
@@ -107,6 +118,15 @@ class Potato(commands.AutoShardedBot):
         async for g in Guild.filter(is_premium=True):
             if (_guild := self.get_guild(g.pk)) and not _guild.chunked:
                 asyncio.create_task(_guild.chunk())
+
+    @on_startup.append
+    async def __db_heartbeat(self):
+        while not self.is_closed():
+            try:
+                await self.db.execute("SELECT 1;")
+            except Exception:
+                pass
+            await asyncio.sleep(30)
 
     @property
     def config(self) -> cfg:
@@ -120,14 +140,14 @@ class Potato(commands.AutoShardedBot):
 
     @property
     def prime_link(self):
-        return "https://quotientbot.xyz/premium"
+        return "https://argonbot.xyz/premium"
 
     @property
     def color(self):
         return self.config.COLOR
 
     def reboot(self):
-        return os.system("pm2 reload quotient")
+        return os.system("pm2 reload argon")
 
     async def init_quo(self):
         """Instantiating aiohttps ClientSession and telling tortoise to create relations"""
@@ -138,9 +158,36 @@ class Potato(commands.AutoShardedBot):
         self.cache = CacheManager(self)
         await self.cache.fill_temp_cache()
 
+        await self.cache.fill_temp_cache()
+
+        # Init Redis
+        self.redis = Redis.from_url(cfg.REDIS_URL, decode_responses=True)
+        try:
+            await self.redis.ping()
+            print("Connected to Redis")
+        except Exception as e:
+            print(f"Failed to connect to Redis: {e}")
+
+        # Cache the connection pool for direct access
+        self._db_pool = Tortoise.get_connection("default")._pool
+
         # Initializing Models (Assigning Bot attribute to all models)
         for mname, model in Tortoise.apps.get("models").items():
             model.bot = self
+
+    @property
+    def db(self):
+        """to execute raw queries"""
+        return self._db_pool
+
+# ... (rest of the file) ...
+
+    @property
+    async def db_latency(self):
+        t1 = time.perf_counter()
+        await self.db.execute("SELECT 1;")
+        t2 = time.perf_counter() - t1
+        return f"{t2*1000:.2f} ms"
 
     async def setup_hook(self) -> None:
         await self.init_quo()
@@ -167,6 +214,8 @@ class Potato(commands.AutoShardedBot):
                     self.tree.copy_global_to(guild=discord.Object(id=self.config.SERVER_ID))
                     synced_guild = await self.tree.sync(guild=discord.Object(id=self.config.SERVER_ID))
                     print(f"Synced {len(synced_guild)} commands to guild {self.config.SERVER_ID}.")
+                except discord.Forbidden:
+                    print(f"Warning: Could not sync to support server {self.config.SERVER_ID}. Bot likely missing generic 'applications.commands' scope integration in that guild.")
                 except Exception as e:
                     print(f"Failed to sync to guild {self.config.SERVER_ID}: {e}")
 
@@ -181,29 +230,53 @@ class Potato(commands.AutoShardedBot):
         if not message.guild:
             return commands.when_mentioned_or(cfg.PREFIX)(self, message)
 
+        # Get Guild Prefix First
         prefix = None
-        guild = self.cache.guild_data.get(message.guild.id)
-        if guild:
-            prefix = guild.get("prefix")
-
+        guild_data = self.cache.guild_data.get(message.guild.id)
+        if guild_data:
+            prefix = guild_data.get("prefix")
         else:
-            self.cache.guild_data[message.guild.id] = {
+            guild_data = {
                 "prefix": cfg.PREFIX,
                 "color": self.color,
                 "footer": cfg.FOOTER,
             }
+            self.cache.guild_data[message.guild.id] = guild_data
 
         prefix = prefix or cfg.PREFIX
+        
+        # Cache permutations if not present
+        if "prefix_perms" not in guild_data or guild_data.get("prefix") != prefix:
+             guild_data["prefix_perms"] = tuple("".join(chars) for chars in itertools.product(*zip(prefix.lower(), prefix.upper())))
+             guild_data["prefix"] = prefix
 
-        return commands.when_mentioned_or(
-            *tuple("".join(chars) for chars in itertools.product(*zip(prefix.lower(), prefix.upper())))
-        )(self, message)
+        prefixes = list(guild_data["prefix_perms"])
+
+        # Check for no-prefix (user-level or server-level)
+        is_np = False
+        if message.author.id in self.cache.noprefix or message.author.id in cfg.DEVS:
+            expires_at = self.cache.noprefix.get(message.author.id)
+            if expires_at and expires_at < self.current_time:
+                # Expired
+                del self.cache.noprefix[message.author.id]
+                from models import NoPrefix
+                asyncio.create_task(NoPrefix.filter(user_id=message.author.id).delete())
+            else:
+                is_np = True
+
+        if is_np:
+            prefixes.append("")
+
+        return commands.when_mentioned_or(*prefixes)(self, message)
 
     async def close(self) -> None:
         await super().close()
 
         if hasattr(self, "session"):
             await self.session.close()
+        
+        if hasattr(self, "redis"):
+            await self.redis.close()
 
         await Tortoise.close_connections()
 
@@ -226,19 +299,35 @@ class Potato(commands.AutoShardedBot):
         if message.guild is None or message.author.bot:
             return
 
+        if message.content in (f"<@{self.user.id}>", f"<@!{self.user.id}>"):
+            prefix = self.cache.guild_data.get(message.guild.id, {}).get("prefix", cfg.PREFIX)
+
+            embed = discord.Embed(
+                description=f"You seem lost. Are you?\n\nMy prefix for this server is `{prefix}`\nUse `Ahelp` to get started.",
+                color=self.color
+            )
+            embed.set_author(name=f"Requested by {message.author.name}", icon_url=message.author.display_avatar.url)
+            embed.set_footer(text="Argon by unknown")
+            
+            try:
+                await message.reply(embed=embed)
+            except discord.HTTPException:
+                pass
+            return
+
         await self.process_commands(message)
 
     async def on_command(self, ctx: Context):
         self.cmd_invokes += 1
-        await csts.show_tip(ctx)
-        await csts.remind_premium(ctx)
-        await self.db.execute(
+        asyncio.create_task(csts.show_tip(ctx))
+        asyncio.create_task(csts.remind_premium(ctx))
+        asyncio.create_task(self.db.execute(
             "INSERT INTO user_data (user_id) VALUES ($1) ON CONFLICT DO NOTHING",
             ctx.author.id,
-        )
+        ))
 
     async def on_ready(self):
-        print(f"[Potato] Logged in as {self.user.name}({self.user.id})")
+        print(f"[Argon] Logged in as {self.user.name}({self.user.id})")
 
     async def wait_and_delete(self, message: discord.Message, delay: int = 10):
         """Waits for `delay` seconds and deletes the message"""
@@ -446,10 +535,9 @@ class Potato(commands.AutoShardedBot):
                 return
 
 
-bot = Potato()
+bot = Argon()
 
 
 @bot.before_invoke
 async def bot_before_invoke(ctx: Context):
-    if ctx.guild is not None and not ctx.guild.chunked:
-        asyncio.create_task(ctx.guild.chunk())
+    pass

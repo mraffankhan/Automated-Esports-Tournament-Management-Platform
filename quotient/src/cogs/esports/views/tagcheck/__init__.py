@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 from ...views.base import EsportsBaseView
 
 if TYPE_CHECKING:
-    from core import Potato
+    from core import Argon
 
 import discord
 
@@ -18,13 +18,13 @@ class TagCheckView(EsportsBaseView):
         super().__init__(ctx)
 
         self.ctx = ctx
-        self.bot: Potato = ctx.bot
+        self.bot: Argon = ctx.bot
 
     async def initial_embed(self):
         records = await TagCheck.filter(guild_id=self.ctx.guild.id)
         to_show = [f"`{idx}.` {_.__str__()}" for idx, _ in enumerate(records, start=1)]
         _m = "\n".join(to_show) if to_show else "```No TagCheck channels found.```"
-        _e = discord.Embed(color=0x00FFB3, title="TagCheck Editor")
+        _e = discord.Embed(color=self.ctx.bot.cache.guild_color(self.ctx.guild.id), title="TagCheck Editor")
         _e.description = "**Current TagCheck channels:**\n" + _m
         _e.set_footer(text="Click Add Channel to set up a new TagCheck channel.")
         return _e

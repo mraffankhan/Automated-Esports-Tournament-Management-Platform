@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, List, Optional, Union
 
 if TYPE_CHECKING:
-    from core import Potato
+    from core import Argon
 
 import re
 
@@ -11,9 +11,9 @@ import discord
 from discord.ext import commands
 
 from constants import LockType
-from core import Cog, Context, PotatoView, role_command_check
+from core import Cog, Context, ArgonView, role_command_check
 from models import Lockdown
-from utils import ActionReason, BannedMember, FutureTime, MemberID, QuoUser, emote, human_timedelta, plural
+from utils import ActionReason, BannedMember, FutureTime, MemberID, ArgonUser, emote, human_timedelta, plural
 
 from .events import *
 from .utils import _complex_cleanup_strategy, _self_clean_system, do_removal
@@ -21,7 +21,7 @@ from .views import *
 
 
 class Mod(Cog):
-    def __init__(self, bot: Potato):
+    def __init__(self, bot: Argon):
         self.bot = bot
 
     @commands.command()
@@ -29,7 +29,7 @@ class Mod(Cog):
     @commands.cooldown(5, 1, type=commands.BucketType.user)
     async def selfclean(self, ctx: Context, search=100):
         """
-        Clean Potato's messages,
+        Clean Argon's messages,
         Note: If bot has `manage_messages` permissions then it will delete the command messages too.
         """
         strategy = _self_clean_system
@@ -90,7 +90,7 @@ class Mod(Cog):
 
     @clear.command()
     @commands.has_permissions(manage_messages=True)
-    async def user(self, ctx, member: QuoUser, search=100):
+    async def user(self, ctx, member: ArgonUser, search=100):
         """Removes all messages by the member."""
         await do_removal(ctx, search, lambda e: e.author == member)
 
@@ -224,7 +224,7 @@ class Mod(Cog):
             if role not in member.roles:
                 await member.add_roles(role, reason=reason)
 
-        _view = PotatoView(ctx)
+        _view = ArgonView(ctx)
         _view.add_item(RoleRevertButton(ctx, role=role, members=members))
 
         await ctx.safe_delete(m)
@@ -264,7 +264,7 @@ class Mod(Cog):
             except discord.HTTPException:
                 failed += 1
 
-        _view = PotatoView(ctx)
+        _view = ArgonView(ctx)
         _view.add_item(RoleRevertButton(ctx, role=role, members=members))
 
         await ctx.safe_delete(m)
@@ -300,7 +300,7 @@ class Mod(Cog):
             except discord.HTTPException:
                 failed += 1
 
-        _view = PotatoView(ctx)
+        _view = ArgonView(ctx)
         _view.add_item(RoleRevertButton(ctx, role=role, members=members))
 
         await ctx.safe_delete(m)
@@ -337,7 +337,7 @@ class Mod(Cog):
             except discord.HTTPException:
                 failed += 1
 
-        _view = PotatoView(ctx)
+        _view = ArgonView(ctx)
         _view.add_item(RoleRevertButton(ctx, role=role, members=members))
 
         await ctx.safe_delete(m)
@@ -366,7 +366,7 @@ class Mod(Cog):
         for member in members:
             await member.remove_roles(role, reason=reason)
 
-        _view = PotatoView(ctx)
+        _view = ArgonView(ctx)
         _view.add_item(RoleRevertButton(ctx, role=role, members=members, take_role=False))
 
         await ctx.safe_delete(m)
@@ -404,7 +404,7 @@ class Mod(Cog):
             except discord.HTTPException:
                 failed += 1
 
-        _view = PotatoView(ctx)
+        _view = ArgonView(ctx)
         _view.add_item(RoleRevertButton(ctx, role=role, members=members, take_role=False))
 
         await ctx.safe_delete(m)
@@ -440,7 +440,7 @@ class Mod(Cog):
             except discord.HTTPException:
                 failed += 1
 
-        _view = PotatoView(ctx)
+        _view = ArgonView(ctx)
         _view.add_item(RoleRevertButton(ctx, role=role, members=members, take_role=False))
 
         await ctx.safe_delete(m)
@@ -476,7 +476,7 @@ class Mod(Cog):
             except discord.HTTPException:
                 failed += 1
 
-        _view = PotatoView(ctx)
+        _view = ArgonView(ctx)
         _view.add_item(RoleRevertButton(ctx, role=role, members=members, take_role=False))
 
         await ctx.safe_delete(m)
@@ -746,7 +746,7 @@ class Mod(Cog):
                 await ctx.success(f"OK!")
 
 
-async def setup(bot: Potato) -> None:
+async def setup(bot: Argon) -> None:
     await bot.add_cog(Mod(bot))
     await bot.add_cog(LockEvents(bot))
     await bot.add_cog(RoleEvents(bot))

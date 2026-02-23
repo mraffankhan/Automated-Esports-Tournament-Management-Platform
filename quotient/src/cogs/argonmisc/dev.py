@@ -3,7 +3,7 @@ from __future__ import annotations
 import typing as T
 
 if T.TYPE_CHECKING:
-    from core import Potato
+    from core import Argon
 
 import asyncio
 import datetime
@@ -22,7 +22,7 @@ __all__ = ("Dev",)
 
 
 class Dev(Cog):
-    def __init__(self, bot: Potato):
+    def __init__(self, bot: Argon):
         self.bot = bot
 
     async def cog_check(self, ctx: Context):
@@ -234,12 +234,24 @@ class Dev(Cog):
                     """
             return await tabulate_query(ctx, query, [c.qualified_name for c in cog.walk_commands()], interval)
 
-    @commands.command(name="addpremium", aliases=("givepremium",))
-    async def add_premium(self, ctx: Context, target: T.Union[discord.User, int], *, duration: TimeText):
+    @commands.group(name="prem", aliases=("pm",), hidden=True, invoke_without_command=True)
+    async def prem(self, ctx: Context):
         """
-        Give premium to a user or a server.
-        Target can be a User, User ID, or Guild ID.
-        Duration can be '30d', '1y', etc.
+        Manage premium for users and servers.
+
+        Commands:
+          `prem add @user/guild_id <duration>` → Grant premium
+          `prem remove @user/guild_id` → Remove premium
+          `prem list` → Show all premium users & servers
+        """
+        await ctx.send_help(ctx.command)
+
+    @prem.command(name="add", aliases=("give",))
+    async def premium_add(self, ctx: Context, target: T.Union[discord.User, int], *, duration: TimeText):
+        """
+        Grant premium to a user or server.
+        Target: @user, user ID, or guild ID.
+        Duration: 30d, 1y, etc.
         """
         try:
             expire = duration.dt
@@ -260,24 +272,28 @@ class Dev(Cog):
                     guild.premium_end_time = expire
                     guild.made_premium_by = ctx.author.id
                     await guild.save()
-                    await ctx.send(f"✅ Granted premium to Guild `{target}` until {discord_timestamp(expire)}")
+                    guild_obj = self.bot.get_guild(target)
+                    guild_name = guild_obj.name if guild_obj else str(target)
+                    await ctx.send(f"✅ Granted premium to Guild **{guild_name}** (`{target}`) until {discord_timestamp(expire)}")
                 else:
-                    # Check if it's a user or create new
+                    # Treat as user ID
                     user, created = await User.get_or_create(user_id=target)
                     user.is_premium = True
                     user.premium_expire_time = expire
                     await user.save()
+                    fetched = await self.bot.getch(self.bot.get_user, self.bot.fetch_user, target)
+                    name = str(fetched) if fetched else str(target)
                     status = "Created and granted" if created else "Granted"
-                    await ctx.send(f"✅ {status} premium to User `{target}` until {discord_timestamp(expire)}")
+                    await ctx.send(f"✅ {status} premium to User **{name}** (`{target}`) until {discord_timestamp(expire)}")
 
         except Exception as e:
             await ctx.send(f"❌ Error: {e}")
 
-    @commands.command(name="removepremium", aliases=("delpremium", "rmpremium"))
-    async def remove_premium(self, ctx: Context, target: T.Union[discord.User, int]):
+    @prem.command(name="remove", aliases=("del", "rm"))
+    async def premium_remove(self, ctx: Context, target: T.Union[discord.User, int]):
         """
-        Remove premium from a user or a server.
-        Target can be a User, User ID, or Guild ID.
+        Remove premium from a user or server.
+        Target: @user, user ID, or guild ID.
         """
         if isinstance(target, discord.User):
             await User.filter(pk=target.id).update(is_premium=False, premium_expire_time=None)
@@ -289,10 +305,53 @@ class Dev(Cog):
                 await Guild.filter(pk=target).update(
                     is_premium=False, premium_end_time=None, made_premium_by=None
                 )
-                await ctx.success(f"Removed premium from Guild `{target}`")
-            # Check if it's a user
+                guild_obj = self.bot.get_guild(target)
+                guild_name = guild_obj.name if guild_obj else str(target)
+                await ctx.success(f"Removed premium from Guild **{guild_name}** (`{target}`)")
             elif await User.filter(pk=target).exists():
                 await User.filter(pk=target).update(is_premium=False, premium_expire_time=None)
-                await ctx.success(f"Removed premium from User `{target}`")
+                fetched = await self.bot.getch(self.bot.get_user, self.bot.fetch_user, target)
+                name = str(fetched) if fetched else str(target)
+                await ctx.success(f"Removed premium from User **{name}** (`{target}`)")
             else:
                 await ctx.error(f"ID `{target}` not found in Users or Guilds.")
+
+    @prem.command(name="list", aliases=("ls", "all"))
+    async def premium_list(self, ctx: Context):
+        """Show all premium users and servers."""
+        premium_users = await User.filter(is_premium=True)
+        premium_guilds = await Guild.filter(is_premium=True)
+
+        if not premium_users and not premium_guilds:
+            return await ctx.error("No premium users or servers found.")
+
+        lines = []
+
+        for g in premium_guilds:
+            guild_obj = self.bot.get_guild(g.guild_id)
+            name = guild_obj.name if guild_obj else str(g.guild_id)
+            exp = f"until {discord_timestamp(g.premium_end_time)}" if g.premium_end_time else "permanent"
+            booster = g.booster
+            by = f" (by {booster})" if booster else ""
+            lines.append(f"🏠 **{name}** — {exp}{by}")
+
+        for u in premium_users:
+            user = self.bot.get_user(u.user_id)
+            if user is None:
+                try:
+                    user = await self.bot.fetch_user(u.user_id)
+                except Exception:
+                    user = None
+            name = f"{user} ({user.mention})" if user else f"Unknown (`{u.user_id}`)"
+            exp = f"until {discord_timestamp(u.premium_expire_time)}" if u.premium_expire_time else "permanent"
+            lines.append(f"👤 {name} — {exp}")
+
+        embed = discord.Embed(
+            title="⭐ Premium Status",
+            description="\n".join(lines[:30]),
+            color=self.bot.color,
+        )
+        if len(lines) > 30:
+            embed.set_footer(text=f"Showing 30/{len(lines)} entries")
+
+        await ctx.send(embed=embed)

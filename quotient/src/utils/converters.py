@@ -13,12 +13,12 @@ __all__ = (
     "BannedMember",
     "ActionReason",
     "MemberID",
-    "QuoRole",
-    "QuoMember",
-    "QuoUser",
-    "QuoColor",
-    "QuoCategory",
-    "QuoTextChannel",
+    "ArgonRole",
+    "ArgonMember",
+    "ArgonUser",
+    "ArgonColor",
+    "ArgonCategory",
+    "ArgonTextChannel",
     "to_async",
 )
 
@@ -41,7 +41,7 @@ class to_async:
         return wrapper
 
 
-class QuoColor:
+class ArgonColor:
     @classmethod
     async def convert(cls, ctx, arg):
         match, check = None, False
@@ -102,7 +102,7 @@ def can_execute_action(ctx, user, target):
 class MemberID(commands.Converter):
     async def convert(self, ctx, argument):
         try:
-            m = await QuoMember().convert(ctx, argument)
+            m = await ArgonMember().convert(ctx, argument)
         except commands.BadArgument:
             try:
                 member_id = int(argument, base=10)
@@ -123,7 +123,7 @@ class MemberID(commands.Converter):
         return m
 
 
-class QuoRole(commands.Converter):
+class ArgonRole(commands.Converter):
     async def convert(self, ctx, argument) -> Optional[discord.Role]:
         """
         Return Role, this works without taking case sensitivity into account.
@@ -143,7 +143,7 @@ class QuoRole(commands.Converter):
             raise commands.RoleNotFound(argument)
 
 
-class QuoMember(commands.Converter):
+class ArgonMember(commands.Converter):
     async def convert(self, ctx, argument) -> Optional[discord.Member]:
         """
         Returns Member , it is better that commands.MemberConverter() because it finds member without
@@ -169,7 +169,7 @@ class QuoMember(commands.Converter):
             raise commands.MemberNotFound(argument)
 
 
-class QuoUser(commands.Converter):
+class ArgonUser(commands.Converter):
     async def convert(self, ctx, argument):
         """
         This will return Member if member exists in the guild else will returns User.
@@ -178,7 +178,7 @@ class QuoUser(commands.Converter):
         argument = argument.strip()
         if ctx.guild:
             try:
-                return await QuoMember().convert(ctx, argument)
+                return await ArgonMember().convert(ctx, argument)
 
             except commands.MemberNotFound:
                 pass
@@ -200,7 +200,7 @@ class QuoUser(commands.Converter):
             raise commands.UserNotFound(argument)
 
 
-class QuoCategory(commands.Converter):
+class ArgonCategory(commands.Converter):
     async def convert(self, ctx: commands.Context, argument):
         try:
             return await commands.CategoryChannelConverter().convert(ctx, argument)
@@ -215,7 +215,7 @@ class QuoCategory(commands.Converter):
             raise commands.ChannelNotFound(argument)
 
 
-class QuoTextChannel(commands.Converter):
+class ArgonTextChannel(commands.Converter):
     async def convert(self, ctx: commands.Context, argument):
         try:
             return await commands.TextChannelConverter().convert(ctx, argument)

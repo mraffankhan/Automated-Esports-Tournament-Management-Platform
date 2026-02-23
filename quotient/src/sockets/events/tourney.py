@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from core import Potato
+    from core import Argon
 
 from core import Cog
 from models import Tourney
@@ -14,7 +14,7 @@ __all__ = ("SockTourney",)
 
 
 class SockTourney(Cog):
-    def __init__(self, bot: Potato):
+    def __init__(self, bot: Argon):
         self.bot = bot
 
     @Cog.listener()

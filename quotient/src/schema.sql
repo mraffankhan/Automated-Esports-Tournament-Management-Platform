@@ -276,7 +276,7 @@ CREATE INDEX IF NOT EXISTS "idx_timer_expires_ad551b" ON "timer" ("expires");
 CREATE TABLE IF NOT EXISTS "tm.tourney" (
     "id" BIGSERIAL NOT NULL PRIMARY KEY,
     "guild_id" BIGINT NOT NULL,
-    "name" VARCHAR(30) NOT NULL  DEFAULT 'Quotient-Tourney',
+    "name" VARCHAR(30) NOT NULL  DEFAULT 'Argon-Tourney',
     "registration_channel_id" BIGINT NOT NULL,
     "confirm_channel_id" BIGINT NOT NULL,
     "role_id" BIGINT NOT NULL,
@@ -369,4 +369,40 @@ CREATE TABLE IF NOT EXISTS "tm.tourney_tm.media_partners" (
 CREATE TABLE IF NOT EXISTS "tm.tourney_tm.register" (
     "tm.tourney_id" BIGINT NOT NULL REFERENCES "tm.tourney" ("id") ON DELETE CASCADE,
     "tmslot_id" BIGINT NOT NULL REFERENCES "tm.register" ("id") ON DELETE CASCADE
+);
+CREATE TABLE IF NOT EXISTS "ticket_configs" (
+    "id" SERIAL NOT NULL PRIMARY KEY,
+    "guild_id" BIGINT NOT NULL,
+    "channel_id" BIGINT NOT NULL,
+    "message_id" BIGINT,
+    "category_id" BIGINT,
+    "log_channel_id" BIGINT,
+    "support_role_id" BIGINT,
+    "title" VARCHAR(256) NOT NULL DEFAULT 'Support Ticket',
+    "description" TEXT NOT NULL DEFAULT 'Click the button below to open a support ticket.',
+    "button_label" VARCHAR(80) NOT NULL DEFAULT 'Open Ticket',
+    "button_emoji" VARCHAR(50) DEFAULT '🎫',
+    "max_tickets" SMALLINT NOT NULL DEFAULT 1
+);
+CREATE INDEX IF NOT EXISTS "idx_ticket_configs_guild" ON "ticket_configs" ("guild_id");
+CREATE TABLE IF NOT EXISTS "tickets" (
+    "id" SERIAL NOT NULL PRIMARY KEY,
+    "guild_id" BIGINT NOT NULL,
+    "channel_id" BIGINT NOT NULL UNIQUE,
+    "opener_id" BIGINT NOT NULL,
+    "config_id" INT NOT NULL REFERENCES "ticket_configs" ("id") ON DELETE CASCADE,
+    "opened_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "closed_at" TIMESTAMPTZ,
+    "closed_by" BIGINT,
+    "reason" TEXT
+);
+CREATE INDEX IF NOT EXISTS "idx_tickets_guild" ON "tickets" ("guild_id");
+CREATE TABLE IF NOT EXISTS "welcome_configs" (
+    "guild_id" BIGINT NOT NULL PRIMARY KEY,
+    "channel_id" BIGINT,
+    "message" TEXT NOT NULL DEFAULT 'Welcome {user} to **{server}**! You are member #{member_count}.',
+    "enabled" BOOL NOT NULL DEFAULT FALSE,
+    "embed_enabled" BOOL NOT NULL DEFAULT FALSE,
+    "embed_color" INT DEFAULT 65459,
+    "embed_title" TEXT DEFAULT 'Welcome!'
 );

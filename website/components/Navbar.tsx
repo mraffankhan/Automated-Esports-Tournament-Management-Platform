@@ -17,6 +17,11 @@ export default function Navbar() {
             setUser(session?.user || null);
             setLoading(false);
 
+            // Persist the Discord access token whenever available
+            if (session?.provider_token) {
+                localStorage.setItem('discord_access_token', session.provider_token);
+            }
+
             if (session?.user && session?.provider_token) {
                 // Trigger auto-join
                 try {
@@ -38,6 +43,12 @@ export default function Navbar() {
 
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
             setUser(session?.user || null);
+
+            // Persist token on sign-in
+            if (session?.provider_token) {
+                localStorage.setItem('discord_access_token', session.provider_token);
+            }
+
             if (session?.user && session?.provider_token && _event === 'SIGNED_IN') {
                 // Trigger auto-join on sign in
                 try {
@@ -59,6 +70,7 @@ export default function Navbar() {
     }, []);
 
     const handleLogout = async () => {
+        localStorage.removeItem('discord_access_token');
         await supabase.auth.signOut();
         setUser(null);
         setIsOpen(false);
@@ -68,37 +80,39 @@ export default function Navbar() {
         await supabase.auth.signInWithOAuth({
             provider: 'discord',
             options: {
-                redirectTo: `${window.location.origin}/profile`,
-                scopes: 'guilds.join identify email',
+                redirectTo: `${window.location.origin}/servers`,
+                scopes: 'guilds identify email',
             },
         });
     };
 
     return (
         <>
-            <nav className="fixed top-6 left-0 right-0 mx-auto w-[95%] max-w-7xl z-50 bg-black/80 backdrop-blur-md border border-cyan-500/20 rounded-full px-6 transition-all duration-300 hover:border-cyan-500/40 hover:shadow-[0_0_20px_rgba(6,182,212,0.15)]">
+            <nav className="fixed top-6 left-0 right-0 mx-auto w-[95%] max-w-7xl z-50 bg-black/80 backdrop-blur-md border border-primary/20 rounded-full px-6 transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_20px_var(--color-primary-glow)]">
                 <div className="flex items-center justify-between h-16">
                     <div className="flex items-center">
-                        <Link href="/" className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent hover:text-glow transition-all">
-                            POTATO
+                        <Link href="/" className="text-2xl font-bold bg-gradient-to-r from-primary to-purple-500 bg-clip-text text-transparent hover:text-glow transition-all">
+                            ARGON
                         </Link>
                     </div>
                     <div className="hidden md:block">
                         <div className="ml-10 flex items-baseline space-x-8 items-center">
                             <NavLink href="/">HOME</NavLink>
+                            <NavLink href="/servers">DASHBOARD</NavLink>
                             <NavLink href="/tournaments">TOURNAMENTS</NavLink>
+                            <NavLink href="/premium">PREMIUM</NavLink>
                             <NavLink href="/get">GET</NavLink>
 
                             {loading ? (
                                 <div className="h-10 w-10 flex items-center justify-center">
-                                    <Loader2 size={20} className="text-cyan-400 animate-spin" />
+                                    <Loader2 size={20} className="text-primary animate-spin" />
                                 </div>
                             ) : user ? (
                                 <Link
-                                    href="/profile"
-                                    className="flex items-center gap-3 pl-2 pr-4 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/20 transition-all hover:text-glow hover:border-cyan-500/60 group"
+                                    href="/servers"
+                                    className="flex items-center gap-3 pl-2 pr-4 py-1.5 rounded-full bg-primary/10 border border-primary/30 text-primary hover:bg-primary/20 transition-all hover:text-glow hover:border-primary/60 group"
                                 >
-                                    <div className="w-8 h-8 rounded-full overflow-hidden border border-cyan-500/50">
+                                    <div className="w-8 h-8 rounded-full overflow-hidden border border-primary/50">
                                         <img
                                             src={user.user_metadata.avatar_url}
                                             alt="User"
@@ -112,7 +126,7 @@ export default function Navbar() {
                             ) : (
                                 <button
                                     onClick={handleLogin}
-                                    className="flex items-center gap-2 px-6 py-2 rounded-full bg-cyan-500 hover:bg-cyan-400 text-black font-bold text-sm transition-all hover:scale-105 hover:shadow-[0_0_15px_rgba(6,182,212,0.4)]"
+                                    className="flex items-center gap-2 px-6 py-2 rounded-full bg-primary hover:bg-primary/80 text-black font-bold text-sm transition-all hover:scale-105 hover:shadow-[0_0_15px_var(--color-primary-glow)]"
                                 >
                                     <LogIn size={16} />
                                     <span>LOGIN</span>
@@ -124,7 +138,7 @@ export default function Navbar() {
                         <button
                             onClick={() => setIsOpen(true)}
                             type="button"
-                            className="inline-flex items-center justify-center p-2 rounded-full text-cyan-400 hover:text-white hover:bg-cyan-500/20 focus:outline-none transition-colors"
+                            className="inline-flex items-center justify-center p-2 rounded-full text-primary hover:text-white hover:bg-primary/20 focus:outline-none transition-colors"
                         >
                             <span className="sr-only">Open main menu</span>
                             <Menu size={24} />
@@ -139,19 +153,21 @@ export default function Navbar() {
                     <div className="flex justify-end p-6">
                         <button
                             onClick={() => setIsOpen(false)}
-                            className="p-2 rounded-full text-cyan-400 hover:text-white hover:bg-cyan-500/20 transition-colors"
+                            className="p-2 rounded-full text-primary hover:text-white hover:bg-primary/20 transition-colors"
                         >
                             <X size={32} />
                         </button>
                     </div>
                     <div className="flex flex-col items-center justify-center flex-grow space-y-8">
                         <MobileNavLink href="/" onClick={() => setIsOpen(false)}>HOME</MobileNavLink>
+                        <MobileNavLink href="/servers" onClick={() => setIsOpen(false)}>DASHBOARD</MobileNavLink>
                         <MobileNavLink href="/tournaments" onClick={() => setIsOpen(false)}>TOURNAMENTS</MobileNavLink>
+                        <MobileNavLink href="/premium" onClick={() => setIsOpen(false)}>PREMIUM</MobileNavLink>
                         <MobileNavLink href="/get" onClick={() => setIsOpen(false)}>GET</MobileNavLink>
 
                         {user ? (
                             <div className="flex flex-col items-center gap-4 mt-8">
-                                <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-cyan-500 shadow-[0_0_20px_rgba(6,182,212,0.3)]">
+                                <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-primary shadow-[0_0_20px_var(--color-primary-glow)]">
                                     <img
                                         src={user.user_metadata.avatar_url}
                                         alt="User"
@@ -171,7 +187,7 @@ export default function Navbar() {
                         ) : (
                             <button
                                 onClick={() => { setIsOpen(false); handleLogin(); }}
-                                className="mt-8 flex items-center gap-3 px-8 py-4 rounded-full bg-cyan-500 hover:bg-cyan-400 text-black font-bold text-xl transition-all hover:scale-105 hover:shadow-[0_0_20px_rgba(6,182,212,0.4)]"
+                                className="mt-8 flex items-center gap-3 px-8 py-4 rounded-full bg-primary hover:bg-primary/80 text-black font-bold text-xl transition-all hover:scale-105 hover:shadow-[0_0_20px_var(--color-primary-glow)]"
                             >
                                 <LogIn size={24} />
                                 <span>LOGIN NOW</span>
@@ -188,10 +204,10 @@ function NavLink({ href, children }: { href: string; children: React.ReactNode }
     return (
         <Link
             href={href}
-            className="text-gray-300 hover:text-cyan-400 px-3 py-2 text-sm font-medium transition-colors hover:text-glow relative group"
+            className="text-gray-300 hover:text-primary px-3 py-2 text-sm font-medium transition-colors hover:text-glow relative group"
         >
             {children}
-            <span className="absolute bottom-0 left-0 w-full h-0.5 bg-cyan-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
+            <span className="absolute bottom-0 left-0 w-full h-0.5 bg-primary transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
         </Link>
     );
 }
@@ -201,7 +217,7 @@ function MobileNavLink({ href, onClick, children }: { href: string; onClick: () 
         <Link
             href={href}
             onClick={onClick}
-            className="text-3xl font-bold text-gray-300 hover:text-cyan-400 transition-colors hover:text-glow"
+            className="text-3xl font-bold text-gray-300 hover:text-primary transition-colors hover:text-glow"
         >
             {children}
         </Link>

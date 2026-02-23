@@ -23,11 +23,15 @@ def has_done_setup():
 def is_premium_guild():
     async def predictate(ctx: Context):
         check = await Guild.get_or_none(guild_id=ctx.guild.id)
-        if not check or check.is_premium is False:
-            raise NotPremiumGuild()
-
-        else:
+        if check and check.is_premium:
             return True
+
+        # Check if user is premium
+        user_check = await User.get_or_none(user_id=ctx.author.id)
+        if user_check and user_check.is_premium:
+            return True
+
+        raise NotPremiumGuild()
 
     return commands.check(predictate)
 

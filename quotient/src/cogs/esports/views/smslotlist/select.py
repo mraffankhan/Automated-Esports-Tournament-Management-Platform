@@ -44,12 +44,13 @@ async def prompt_slot_selection(slots: List[AssignedSlot], placeholder: str, mul
 
 
 class BanOptions(discord.ui.View):
-    def __init__(self):
+    def __init__(self, color: int):
         super().__init__(timeout=60)
         self.value: str = None
+        self.color = color
 
     def initial_embed(self):
-        _e = discord.Embed(color=0x00FFB3, title="Ban karne ka style choose karo :)", url=config.SERVER_LINK)
+        _e = discord.Embed(color=self.color, title="Ban karne ka style choose karo :)", url=config.SERVER_LINK)
         _e.description = (
             f"{kd(1)} - Ban Team leader from this scrim.\n\n"
             f"{kd(2)} - Ban whole team from this scrim.\n\n"

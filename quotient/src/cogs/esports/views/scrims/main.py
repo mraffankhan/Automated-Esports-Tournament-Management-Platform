@@ -29,7 +29,7 @@ class ScrimsMain(ScrimsView):
         self.ctx = ctx
 
     async def initial_embed(self):
-        _e = discord.Embed(color=0x00FFB3, title="Potato's Smart Scrims Manager", url=self.ctx.config.SERVER_LINK)
+        _e = discord.Embed(color=self.ctx.bot.cache.guild_color(self.ctx.guild.id), title="Argon's Smart Scrims Manager", url=self.ctx.config.SERVER_LINK)
 
         to_show = []
         for idx, _r in enumerate(await Scrim.filter(guild_id=self.ctx.guild.id).order_by("open_time"), start=1):

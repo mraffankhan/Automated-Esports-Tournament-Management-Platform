@@ -8,7 +8,7 @@ import discord
 if T.TYPE_CHECKING:
     from core import Context
 
-from .views import QuoInput, PotatoView
+from .views import ArgonInput, ArgonView
 
 
 class EmbedOptions(discord.ui.Select):
@@ -70,7 +70,7 @@ class EmbedOptions(discord.ui.Select):
             await self.view.refresh_view()
 
         elif selected == "main":
-            modal = QuoInput("Set Embed Message")
+            modal = ArgonInput("Set Embed Message")
             modal.add_item(
                 discord.ui.TextInput(
                     label="Title",
@@ -113,7 +113,7 @@ class EmbedOptions(discord.ui.Select):
             await self.view.refresh_view()
 
         elif selected == "thumb":
-            modal = QuoInput("Edit Thumbnail Image")
+            modal = ArgonInput("Edit Thumbnail Image")
             modal.add_item(
                 discord.ui.TextInput(
                     label="Enter Image URL (Optional)",
@@ -134,7 +134,7 @@ class EmbedOptions(discord.ui.Select):
             await self.view.refresh_view()
 
         elif selected == "image":
-            modal = QuoInput("Edit Main Image")
+            modal = ArgonInput("Edit Main Image")
             modal.add_item(
                 discord.ui.TextInput(
                     label="Enter Image URL (Optional)",
@@ -156,7 +156,7 @@ class EmbedOptions(discord.ui.Select):
             await self.view.refresh_view()
 
         elif selected == "footer_icon":
-            modal = QuoInput("Edit Footer Icon")
+            modal = ArgonInput("Edit Footer Icon")
             modal.add_item(
                 discord.ui.TextInput(
                     label="Enter Image URL (Optional)",
@@ -178,9 +178,9 @@ class EmbedOptions(discord.ui.Select):
             await self.view.refresh_view()
 
         elif selected == "color":
-            from utils import QuoColor
+            from utils import ArgonColor
 
-            modal = QuoInput("Set Embed Color")
+            modal = ArgonInput("Set Embed Color")
             modal.add_item(
                 discord.ui.TextInput(
                     label="Enter a valid Color",
@@ -196,14 +196,14 @@ class EmbedOptions(discord.ui.Select):
 
             with suppress(ValueError):
                 if c := str(modal.children[0]):
-                    color = int(str(await QuoColor.convert(self.ctx, c)).replace("#", ""), 16)
+                    color = int(str(await ArgonColor.convert(self.ctx, c)).replace("#", ""), 16)
 
             self.view.embed.color = color
 
             await self.view.refresh_view()
 
 
-class EmbedBuilder(PotatoView):
+class EmbedBuilder(ArgonView):
     def __init__(self, ctx: Context, **kwargs: T.Any):
         super().__init__(ctx, timeout=100)
 
@@ -241,7 +241,7 @@ class EmbedBuilder(PotatoView):
             .set_thumbnail(url="https://cdn.discordapp.com/attachments/853174868551532564/860464565338898472/embed_thumbnail.png")
             .set_image(url="https://cdn.discordapp.com/attachments/853174868551532564/860462053063393280/embed_image.png")
             .set_footer(
-                text="Potato Yooo",
+                text="Argon by unknown",
                 icon_url="https://media.discordapp.net/attachments/853174868551532564/860464989164535828/embed_footer.png",
             )
         )

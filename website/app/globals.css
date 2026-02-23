@@ -1,26 +1,26 @@
 @import "tailwindcss";
 
 @theme {
-  --color-cyan-DEFAULT: #00FFFF;
-  --color-cyan-glow: #00FFFF80;
+  --color-primary: #ab48d1;
+  --color-primary-glow: #ab48d180;
   --color-black-DEFAULT: #000000;
   --color-background: #000000;
-  --color-foreground: #00FFFF;
-  
+  --color-foreground: #ab48d1;
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
 :root {
   --background: #000000;
-  --foreground: #00FFFF;
+  --foreground: #ab48d1;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
-  background-image: radial-gradient(circle at 50% 0%, #001a1a 0%, #000000 100%);
+  background-image: radial-gradient(circle at 50% 0%, #1a001a 0%, #000000 100%);
   min-height: 100vh;
 }
 
@@ -29,11 +29,27 @@ body {
 }
 
 @utility text-glow {
-  text-shadow: 0 0 10px var(--color-cyan-glow);
+  text-shadow: 0 0 10px var(--color-primary-glow);
 }
 
 @layer utilities {
   .glass-panel {
-    @apply bg-black/40 backdrop-blur-md border border-cyan-500/30;
+    @apply bg-black/40 backdrop-blur-md border border-primary/30;
+  }
+}
+
+.animate-in {
+  animation: fadeSlideIn 0.4s ease-out both;
+}
+
+@keyframes fadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }

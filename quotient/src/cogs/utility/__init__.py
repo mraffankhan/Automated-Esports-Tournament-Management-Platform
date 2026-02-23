@@ -7,7 +7,7 @@ from discord.utils import escape_markdown, escape_mentions
 from cogs.utility.events import AutoPurgeEvents, ReminderEvents
 
 if typing.TYPE_CHECKING:
-    from core import Potato
+    from core import Argon
 
 from ast import literal_eval as leval
 from contextlib import suppress
@@ -21,11 +21,11 @@ from humanize import precisedelta
 from core import Cog, Context, embeds
 from models import ArrayAppend, ArrayRemove, AutoPurge, Autorole, Snipe, Tag
 from utils import (
-    QuoCategory,
-    QuoMember,
-    QuoPaginator,
-    QuoRole,
-    QuoTextChannel,
+    ArgonCategory,
+    ArgonMember,
+    ArgonPaginator,
+    ArgonRole,
+    ArgonTextChannel,
     TimeText,
     checks,
     discord_timestamp,
@@ -40,7 +40,7 @@ from .views import *
 
 
 class Utility(Cog, name="utility"):
-    def __init__(self, bot: Potato):
+    def __init__(self, bot: Argon):
         self.bot = bot
 
     @commands.group(aliases=("timer", "remind"), invoke_without_command=True)
@@ -89,7 +89,7 @@ class Utility(Cog, name="utility"):
         if not records:
             return await ctx.error("No currently running reminders.")
 
-        paginator = QuoPaginator(ctx, title=f"Total Reminders: {len(records)}", per_page=10)
+        paginator = ArgonPaginator(ctx, title=f"Total Reminders: {len(records)}", per_page=10)
 
         for _id, expires, message in records:
             paginator.add_line(f"`{_id}`: {truncate_string(message,40)}({discord_timestamp(expires)})")
@@ -100,7 +100,7 @@ class Utility(Cog, name="utility"):
     @checks.is_mod()
     async def autorole(self, ctx: Context, off: typing.Optional[str]):
         """
-        Manage Potato's autoroles.
+        Manage Argon's autoroles.
         """
         if not off or off.lower() != "off":
             return await ctx.send_help(ctx.command)
@@ -125,7 +125,7 @@ class Utility(Cog, name="utility"):
     @autorole.command(name="humans")
     @checks.is_mod()
     @commands.bot_has_guild_permissions(manage_roles=True)
-    async def autorole_humans(self, ctx: Context, *, role: QuoRole):
+    async def autorole_humans(self, ctx: Context, *, role: ArgonRole):
         """
         Add/ Remove a role to human autoroles.
         """
@@ -148,7 +148,7 @@ class Utility(Cog, name="utility"):
     @autorole.command(name="bots")
     @checks.is_mod()
     @commands.bot_has_guild_permissions(manage_roles=True)
-    async def autorole_bots(self, ctx: Context, *, role: QuoRole):
+    async def autorole_bots(self, ctx: Context, *, role: ArgonRole):
         """
         Add/ Remove a role to bot autoroles.
         """
@@ -217,7 +217,7 @@ class Utility(Cog, name="utility"):
 
     @commands.command()
     @commands.bot_has_permissions(embed_links=True)
-    async def snipe(self, ctx: Context, *, channel: typing.Optional[QuoTextChannel]):
+    async def snipe(self, ctx: Context, *, channel: typing.Optional[ArgonTextChannel]):
         """Snipe last deleted message of a channel."""
 
         channel = channel or ctx.channel
@@ -272,7 +272,7 @@ class Utility(Cog, name="utility"):
         await ctx.send(main, allowed_mentions=discord.AllowedMentions.none())
 
     @tag.command(name="all", aliases=("list",))
-    async def all_tags(self, ctx: Context, *, member: typing.Optional[QuoMember]):
+    async def all_tags(self, ctx: Context, *, member: typing.Optional[ArgonMember]):
         """Get all tags owned by the server or a member"""
         if not member:
             tags = await Tag.filter(guild_id=ctx.guild.id)
@@ -285,7 +285,7 @@ class Utility(Cog, name="utility"):
             if not tags:
                 return await ctx.error(f"{member} doesn't own any tag.")
 
-        paginator = QuoPaginator(ctx, title=f"Total Tags: {len(tags)}", per_page=12)
+        paginator = ArgonPaginator(ctx, title=f"Total Tags: {len(tags)}", per_page=12)
 
         for idx, tag in enumerate(tags, start=1):
             paginator.add_line(f"`{idx:02}` {escape_markdown(tag.name)} (ID: {tag.id})")
@@ -354,7 +354,7 @@ class Utility(Cog, name="utility"):
         await ctx.success(f"Deleted {tag.name}")
 
     @tag.command(name="transfer")
-    async def transfer_tag(self, ctx: Context, member: QuoMember, *, tag: TagConverter):
+    async def transfer_tag(self, ctx: Context, member: ArgonMember, *, tag: TagConverter):
         """Transfer the ownership of a tag."""
         if tag.owner_id != ctx.author.id:
             return await ctx.error("This tag doesn't belong to you.")
@@ -379,7 +379,7 @@ class Utility(Cog, name="utility"):
         if not tags:
             return await ctx.error("You do not own any tag.")
 
-        paginator = QuoPaginator(ctx, title=f"Tags you own: {len(tags)}", per_page=12)
+        paginator = ArgonPaginator(ctx, title=f"Tags you own: {len(tags)}", per_page=12)
 
         for idx, tag in enumerate(tags, start=1):
             paginator.add_line(f"`{idx:02}` {escape_markdown(tag.name)} (ID: {tag.id})")
@@ -388,7 +388,7 @@ class Utility(Cog, name="utility"):
 
     @tag.command(name="purge")
     @commands.has_guild_permissions(manage_guild=True)
-    async def purge_tags(self, ctx: Context, *, member: QuoMember):
+    async def purge_tags(self, ctx: Context, *, member: ArgonMember):
         """Delete all the tags of a member"""
         count = await Tag.filter(owner_id=member.id, guild_id=ctx.guild.id).count()
         if not count:
@@ -448,14 +448,14 @@ class Utility(Cog, name="utility"):
         if not tags:
             return await ctx.error("No tags found.")
 
-        paginator = QuoPaginator(ctx, title=f"Matching Tags: {len(tags)}", per_page=10)
+        paginator = ArgonPaginator(ctx, title=f"Matching Tags: {len(tags)}", per_page=10)
         for idx, tag in enumerate(tags, start=1):
             paginator.add_line(f"`{idx:02}` {tag.name} (ID: {tag.id})")
 
         await paginator.start()
 
     @tag.command(name="stats")
-    async def tag_stats(self, ctx: Context, *, member: typing.Optional[QuoMember]):
+    async def tag_stats(self, ctx: Context, *, member: typing.Optional[ArgonMember]):
         """Tag statistics of the server or a member."""
         if member:
             await member_tag_stats(ctx, member)
@@ -470,7 +470,7 @@ class Utility(Cog, name="utility"):
     @category.command(name="delete")
     @commands.has_permissions(manage_channels=True, manage_guild=True)
     @commands.bot_has_permissions(manage_channels=True)
-    async def category_delete(self, ctx: Context, *, category: QuoCategory):
+    async def category_delete(self, ctx: Context, *, category: ArgonCategory):
         """Delete a category and all the channels under it."""
         if not category.channels:
             return await ctx.error(f"**{category}** doesn't have any channels.")
@@ -502,7 +502,7 @@ class Utility(Cog, name="utility"):
     @category.command(name="hide")
     @commands.has_permissions(manage_channels=True, manage_guild=True)
     @commands.bot_has_permissions(manage_channels=True)
-    async def category_hide(self, ctx: Context, *, category: QuoCategory):
+    async def category_hide(self, ctx: Context, *, category: ArgonCategory):
         """Hide a category and all its channels"""
         if not category.channels:
             return await ctx.error(f"**{category}** doesn't have any channels.")
@@ -531,7 +531,7 @@ class Utility(Cog, name="utility"):
     @category.command(name="unhide")
     @commands.has_permissions(manage_channels=True, manage_guild=True)
     @commands.bot_has_permissions(manage_channels=True)
-    async def category_unhide(self, ctx: Context, *, category: QuoCategory):
+    async def category_unhide(self, ctx: Context, *, category: ArgonCategory):
         """Unhide a hidden category and all its channels."""
         if not category.channels:
             return await ctx.error(f"**{category}** doesn't have any channels.")
@@ -560,7 +560,7 @@ class Utility(Cog, name="utility"):
     @category.command(name="nuke")
     @commands.has_permissions(manage_channels=True, manage_guild=True)
     @commands.bot_has_permissions(manage_channels=True)
-    async def category_nuke(self, ctx: Context, *, category: QuoCategory):
+    async def category_nuke(self, ctx: Context, *, category: ArgonCategory):
         """
         Delete a category completely and create a new one
         This will delete all the channels under the category and will make a new one with same perms and channels.
@@ -593,13 +593,13 @@ class Utility(Cog, name="utility"):
     @commands.group(invoke_without_command=True)
     async def autopurge(self, ctx: Context):
         """
-        Set Potato to delete every new message in a channel after  a specific interval.
+        Set Argon to delete every new message in a channel after  a specific interval.
         """
         await ctx.send_help(ctx.command)
 
     @autopurge.command(name="set")
     @commands.has_permissions(manage_messages=True)
-    async def autopurge_set(self, ctx: Context, channel: QuoTextChannel, delete_after: str):
+    async def autopurge_set(self, ctx: Context, channel: ArgonTextChannel, delete_after: str):
         """
         Set the autopurge for a channel
         `delete_after` should be in this format: s|m|h|d
@@ -615,7 +615,7 @@ class Utility(Cog, name="utility"):
         if (count := await AutoPurge.filter(guild_id=ctx.guild.id).count()) >= 1 and not await ctx.is_premium_guild():
             return await ctx.error(
                 "You cannot set autopurge in more than 1 channel in free tier."
-                f"\nHowever [Potato Premium]({ctx.bot.prime_link}) allows you to set autopurge in unlimited channels."
+                f"\nHowever [Argon Premium]({ctx.bot.prime_link}) allows you to set autopurge in unlimited channels."
             )
 
         if channel.id in self.bot.cache.autopurge_channels:
@@ -641,7 +641,7 @@ class Utility(Cog, name="utility"):
 
     @autopurge.command(name="remove")
     @commands.has_permissions(manage_messages=True)
-    async def autopurge_remove(self, ctx: Context, *, channel: QuoTextChannel):
+    async def autopurge_remove(self, ctx: Context, *, channel: ArgonTextChannel):
         """Remove a channel from autopurge"""
         if channel.id not in self.bot.cache.autopurge_channels:
             return await ctx.error(f"{channel} is not an autopurge channel.")
@@ -651,7 +651,7 @@ class Utility(Cog, name="utility"):
         await ctx.success(f"**{channel}** removed from autopurge channels.")
 
 
-async def setup(bot: Potato) -> None:
+async def setup(bot: Argon) -> None:
     await bot.add_cog(Utility(bot))
     await bot.add_cog(AutoPurgeEvents(bot))
     await bot.add_cog(ReminderEvents(bot))

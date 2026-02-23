@@ -1,46 +1,46 @@
 from discord.ext import commands
 
 
-class PotatoError(commands.CheckFailure):
+class ArgonError(commands.CheckFailure):
     pass
 
 
-class NotSetup(PotatoError):
+class NotSetup(ArgonError):
     def __init__(self):
         super().__init__(
-            "This command requires you to have Potato's private channel.\nKindly run `{ctx.prefix}setup` and try again."
+            "This command requires you to have Argon's private channel.\nKindly run `{ctx.prefix}setup` and try again."
         )
 
 
-class NotPremiumGuild(PotatoError):
+class NotPremiumGuild(ArgonError):
     def __init__(self):
         super().__init__(
-            "This command requires this server to be premium.\n\nCheckout Potato Premium [here]({ctx.bot.prime_link})"
+            "This command requires this server to be premium.\n\nCheckout Argon Premium [here]({ctx.bot.prime_link})"
         )
 
 
-class NotPremiumUser(PotatoError):
+class NotPremiumUser(ArgonError):
     def __init__(self):
         super().__init__(
-            "This command requires you to be a premium user.\nCheckout Potato Premium [here]({ctx.bot.prime_link})"
+            "This command requires you to be a premium user.\nCheckout Argon Premium [here]({ctx.bot.prime_link})"
         )
 
 
-class InputError(PotatoError):
+class InputError(ArgonError):
     pass
 
 
-class SMNotUsable(PotatoError):
+class SMNotUsable(ArgonError):
     def __init__(self):
         super().__init__("You need either the `scrims-mod` role or `Manage Server` permissions to use this command.")
 
 
-class TMNotUsable(PotatoError):
+class TMNotUsable(ArgonError):
     def __init__(self):
         super().__init__("You need either the `tourney-mod` role or `Manage Server` permissions to use tourney manager.")
 
 
-class PastTime(PotatoError):
+class PastTime(ArgonError):
     def __init__(self):
         super().__init__(
             f"The time you entered seems to be in past.\n\nKindly try again, use times like: `tomorrow` , `friday 9pm`"
@@ -50,6 +50,6 @@ class PastTime(PotatoError):
 TimeInPast = PastTime
 
 
-class InvalidTime(PotatoError):
+class InvalidTime(ArgonError):
     def __init__(self):
         super().__init__(f"The time you entered seems to be invalid.\n\nKindly try again.")

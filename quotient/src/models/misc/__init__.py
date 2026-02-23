@@ -11,3 +11,6 @@ from .Tag import *
 from .Timer import *
 from .User import *
 from .Votes import *
+from .noprefix import *
+from .ticket import *
+from .Welcome import *

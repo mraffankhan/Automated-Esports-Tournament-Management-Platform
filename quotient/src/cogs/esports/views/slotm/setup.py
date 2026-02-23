@@ -4,12 +4,12 @@ from code import interact
 from typing import TYPE_CHECKING, List
 
 if TYPE_CHECKING:
-    from core import Potato
+    from core import Argon
 
 import discord
 
 from cogs.esports.views.scrims import ScrimSelectorView
-from core import Context, PotatoView
+from core import Context, ArgonView
 from models import Scrim
 from models.esports.slotm import ScrimsSlotManager
 from utils import Prompt, emote, truncate_string
@@ -48,19 +48,18 @@ class ScrimsSlotManagerSetup(EsportsBaseView):
         super().__init__(ctx, timeout=60, title="Scrims Slot Manager")
 
         self.ctx = ctx
-        self.bot: Potato = ctx.bot
+        self.bot: Argon = ctx.bot
 
-    @staticmethod
-    async def initial_message(guild: discord.Guild):
+    async def initial_message(self, guild: discord.Guild):
         records = await ScrimsSlotManager.filter(guild_id=guild.id)
         _to_show = [f"`{idx}.` {_.__str__()}" for idx, _ in enumerate(records, start=1)]
 
         _sm = "\n".join(_to_show) if _to_show else "```Click add-channel to set cancel-claim.```"
 
-        _e = discord.Embed(color=0x00FFB3, title=f"Scrims Slot-Manager Setup")
+        _e = discord.Embed(color=self.ctx.bot.cache.guild_color(guild.id), title=f"Scrims Slot-Manager Setup")
 
         _e.description = (
-            "Slot-Manager is a way to ease-up scrims slot management process. With Potato's slotm users can - "
+            "Slot-Manager is a way to ease-up scrims slot management process. With Argon's slotm users can - "
             "cancel their slot, claim an empty slot and also set reminder for vacant slots, All without bugging any mod.\n\n"
             f"**Current slot-manager channels:**\n{_sm}\n\nDon't forget to set the match times :)"
         )
@@ -73,7 +72,7 @@ class ScrimsSlotManagerSetup(EsportsBaseView):
 
         if not await self.ctx.is_premium_guild():
             if await ScrimsSlotManager.filter(guild_id=self.ctx.guild.id).count() >= 1:
-                return await self.ctx.premium_mango("You need Potato Premium to add more than 1 Slot-Manager channel.")
+                return await self.ctx.premium_mango("You need Argon Premium to add more than 1 Slot-Manager channel.")
 
         available_scrims = await ScrimsSlotManager.available_scrims(self.ctx.guild)
         if not available_scrims:
@@ -123,9 +122,9 @@ class ScrimsSlotManagerSetup(EsportsBaseView):
                 "You haven't added any slot-manager channel yet.\n\nClick `Add Channel` to add a new slot-m channel.", 2
             )
 
-        _view = PotatoView(self.ctx)
+        _view = ArgonView(self.ctx)
         _view.add_item(ScrimsSlotmSelector(records))
-        # _view.add_item(PotatoView.tricky_invite_button())
+        # _view.add_item(ArgonView.tricky_invite_button())
         await interaction.followup.send("Kindly choose a slot-manager channel to edit.", view=_view, ephemeral=True)
         await _view.wait()
 
@@ -133,7 +132,7 @@ class ScrimsSlotManagerSetup(EsportsBaseView):
             __record = await ScrimsSlotManager.get(pk=_view.custom_id)
 
             __editor_view = ScrimsSlotmEditor(self.ctx, record=__record)
-            __editor_view.add_item(PotatoView.tricky_invite_button())
+            __editor_view.add_item(ArgonView.tricky_invite_button())
 
             __editor_view.message = await interaction.followup.send(
                 embed=__editor_view.initial_embed(), view=__editor_view
@@ -162,8 +161,8 @@ class ScrimsSlotManagerSetup(EsportsBaseView):
             text="Users cannot cancel/claim slots after this time.", icon_url=self.ctx.guild.me.display_avatar.url
         )
 
-        _view = PotatoView(self.ctx)
+        _view = ArgonView(self.ctx)
         _view.add_item(MatchTimeEditor(self.ctx))
-        _view.add_item(PotatoView.tricky_invite_button())
+        _view.add_item(ArgonView.tricky_invite_button())
 
         _view.message = await interaction.followup.send(embed=_e, view=_view, ephemeral=True)

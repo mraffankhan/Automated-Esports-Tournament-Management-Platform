@@ -4,21 +4,21 @@ import typing as T
 from os import truncate
 
 if T.TYPE_CHECKING:
-    from core import Potato
+    from core import Argon
 
 from datetime import timedelta
 
 import discord
 from discord.ext import commands
 
-from core import Cog, Context, PotatoView, embeds
+from core import Cog, Context, ArgonView, embeds
 from models import Alert, Prompt, Read, Timer
-from utils import QuoPaginator, discord_timestamp
+from utils import ArgonPaginator, discord_timestamp
 
-__all__ = ("PotatoAlerts",)
+__all__ = ("ArgonAlerts",)
 
 
-class PromptView(PotatoView):
+class PromptView(ArgonView):
     def __init__(self, ctx: Context, alert: Alert):
         super().__init__(ctx, timeout=300)
         self.ctx = ctx
@@ -59,8 +59,8 @@ class CreateAlert(discord.ui.Button):
         await self.ctx.success("Created a new alert with `ID: {}`".format(record.id))
 
 
-class PotatoAlerts(Cog):
-    def __init__(self, bot: Potato):
+class ArgonAlerts(Cog):
+    def __init__(self, bot: Argon):
         self.bot = bot
 
     def cog_check(self, ctx: Context):
@@ -107,7 +107,7 @@ class PotatoAlerts(Cog):
         if not records:
             return await ctx.error("No alerts present at the moment, create one.")
 
-        paginator = QuoPaginator(ctx, title="List of Alerts")
+        paginator = ArgonPaginator(ctx, title="List of Alerts")
         for idx, record in enumerate(records, start=1):
             paginator.add_line(f"`{idx:02}` Created: {discord_timestamp(record.created_at)} (ID: `{record.pk}`)")
 

@@ -25,7 +25,7 @@ class Tourney(BaseDbModel):
 
     id = fields.BigIntField(pk=True, index=True)
     guild_id = fields.BigIntField()
-    name = fields.CharField(max_length=30, default="Potato-Tourney")
+    name = fields.CharField(max_length=30, default="Argon-Tourney")
     registration_channel_id = fields.BigIntField(index=True)
     confirm_channel_id = fields.BigIntField()
     role_id = fields.BigIntField()
@@ -82,7 +82,7 @@ class Tourney(BaseDbModel):
     @property
     def logschan(self) -> Optional[discord.TextChannel]:
         if (g := self.guild) is not None:
-            return discord.utils.get(g.text_channels, name="quotient-tourney-logs")
+            return discord.utils.get(g.text_channels, name="argon-tourney-logs")
 
     @property
     def registration_channel(self) -> Optional[discord.TextChannel]:
@@ -252,7 +252,7 @@ class Tourney(BaseDbModel):
     async def prompt_selector(ctx: Context, *, tourneys: List["Tourney"] = None, placeholder: str = None):
         placeholder = placeholder or "Choose a tourney to contine..."
 
-        from cogs.esports.views.tourney._select import PotatoView, TourneySelector
+        from cogs.esports.views.tourney._select import ArgonView, TourneySelector
 
         tourneys = tourneys or await Tourney.filter(guild_id=ctx.guild.id).order_by("id").limit(25)
 
@@ -262,7 +262,7 @@ class Tourney(BaseDbModel):
         if len(tourneys) == 1:
             return tourneys[0]
 
-        view = PotatoView(ctx)
+        view = ArgonView(ctx)
         view.add_item(TourneySelector(placeholder, tourneys))
 
         view.message = await ctx.send("Choose a tourney from the dropdown below...", view=view)
@@ -289,7 +289,7 @@ class Tourney(BaseDbModel):
                 tourney_mod: discord.PermissionOverwrite(read_messages=True),
             }
             tourney_log_channel = await _g.create_text_channel(
-                name="quotient-tourney-logs",
+                name="argon-tourney-logs",
                 overwrites=overwrites,
                 reason=_reason,
                 topic="**DO NOT RENAME THIS CHANNEL**",

@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 from utils.buttons import Prompt
 
 if TYPE_CHECKING:
-    from core import Potato
+    from core import Argon
 
 from string import ascii_uppercase
 
@@ -27,11 +27,11 @@ class ScrimsSlotmEditor(EsportsBaseView):
         super().__init__(ctx, timeout=30, title="Slot-M Editor")
 
         self.ctx = ctx
-        self.bot: Potato = ctx.bot
+        self.bot: Argon = ctx.bot
         self.record = record
 
     def initial_embed(self):
-        _e = discord.Embed(color=0x00FFB3, title="Slot-M Editor")
+        _e = discord.Embed(color=self.bot.cache.guild_color(self.ctx.guild.id), title="Slot-M Editor")
 
         fields = {
             "Main Channel": getattr(self.record.main_channel, "mention", "Not-Found"),

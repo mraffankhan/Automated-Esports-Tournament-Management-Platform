@@ -8,7 +8,7 @@ import discord
 from models import AssignedSlot, BanLog, Scrim
 
 if T.TYPE_CHECKING:
-    from core import Potato
+    from core import Argon
 
 import asyncio
 import random
@@ -26,7 +26,7 @@ __all__ = ("SlotlistEditButton",)
 class SlotlistEditButton(discord.ui.View):
     message: discord.Message
 
-    def __init__(self, bot: Potato, scrim: Scrim):
+    def __init__(self, bot: Argon, scrim: Scrim):
         super().__init__(timeout=None)
 
         self.bot = bot
@@ -74,7 +74,7 @@ class SlotlistEditButton(discord.ui.View):
 
         _v = await prompt_slot_selection(__slots, placeholder="Select the slots to ban the teams...", multiple=True)
 
-        _e = discord.Embed(color=0x00FFB3, description="Kindly choose slots from the dropdown.")
+        _e = discord.Embed(color=self.bot.cache.guild_color(interaction.guild_id), description="Kindly choose slots from the dropdown.")
 
         await interaction.followup.send(embed=_e, view=_v, ephemeral=True)
 
@@ -98,7 +98,7 @@ class SlotlistEditButton(discord.ui.View):
             await message.delete()
             reason = await TimeText().convert(await self.bot.get_context(message), message.content)
 
-            _v = BanOptions()
+            _v = BanOptions(self.bot.cache.guild_color(interaction.guild_id))
             await interaction.followup.send(embed=_v.initial_embed(), view=_v, ephemeral=True)
             await _v.wait()
             if _v.value:
@@ -121,7 +121,7 @@ class SlotlistEditButton(discord.ui.View):
                 if not await BanLog.get(guild_id=interaction.guild_id).exists():
                     if random.randint(1, 50) == 1:
                         _e = discord.Embed(
-                            color=0x00FFB3,
+                            color=self.bot.cache.guild_color(interaction.guild_id),
                             description=(
                                 "I see You don't have a public banlog channel in your server.\n\n"
                                 "You can set it up with `qbanlog #channel`."
@@ -139,7 +139,7 @@ class SlotlistEditButton(discord.ui.View):
 
         _v = await prompt_slot_selection(__slots, placeholder="Select the slot to get info...", multiple=False)
 
-        _e = discord.Embed(color=0x00FFB3, description="Kindly choose slots from the dropdown.")
+        _e = discord.Embed(color=self.bot.cache.guild_color(interaction.guild_id), description="Kindly choose slots from the dropdown.")
 
         await interaction.followup.send(embed=_e, view=_v, ephemeral=True)
 
@@ -155,7 +155,7 @@ class SlotlistEditButton(discord.ui.View):
             leader = await self.bot.get_or_fetch_member(interaction.guild, _slot.user_id)
 
             _e = discord.Embed(
-                color=0x00FFB3,
+                color=self.bot.cache.guild_color(interaction.guild_id),
                 description=(
                     f"**Slot No:** `{_slot.num}`\n"
                     f"**Name:** `{_slot.team_name}`\n"

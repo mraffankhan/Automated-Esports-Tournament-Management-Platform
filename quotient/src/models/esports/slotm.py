@@ -46,7 +46,7 @@ class ScrimsSlotManager(BaseDbModel):
     @property
     def logschan(self):
         if (g := self.guild) is not None:
-            return discord.utils.get(g.text_channels, name="quotient-scrims-logs")
+            return discord.utils.get(g.text_channels, name="argon-scrims-logs")
 
     async def message(self):
         channel = await self.bot.getch(self.bot.get_channel, self.bot.fetch_channel, self.main_channel_id)
@@ -127,7 +127,7 @@ class ScrimsSlotManager(BaseDbModel):
             else ("```No Slots Available at the time.\nPress 🔔 to set a reminder. ``` \n")
         )
 
-        _e = discord.Embed(color=0x00FFB3, title="Scrims Slot Management", url=self.bot.config.SERVER_LINK)
+        _e = discord.Embed(color=self.bot.cache.guild_color(self.guild_id), title="Scrims Slot Management", url=self.bot.config.SERVER_LINK)
         _e.description = (
             f"● Press `cancel-slot` to cancel your slot.\n"
             f"● Note that Id-Pass role can only be transferred to your teammates.\n\n"

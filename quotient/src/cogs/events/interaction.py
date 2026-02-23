@@ -3,7 +3,7 @@ from __future__ import annotations
 import typing as T
 
 if T.TYPE_CHECKING:
-    from core import Potato
+    from core import Argon
 
 import discord
 from discord.app_commands import AppCommandError
@@ -14,7 +14,7 @@ __all__ = ("InteractionErrors",)
 
 
 class InteractionErrors(Cog):
-    def __init__(self, bot: Potato):
+    def __init__(self, bot: Argon):
         self.bot = bot
         self.bot.tree.interaction_check = self.global_interaction_check
         self.bot.tree.on_error = self.on_app_command_error

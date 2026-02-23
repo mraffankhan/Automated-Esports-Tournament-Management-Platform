@@ -20,7 +20,7 @@ class SlotmScrimsEditor(EsportsBaseView):
         self.record = record
 
     def initial_embed(self) -> discord.Embed:
-        _e = discord.Embed(color=0x00FFB3)
+        _e = discord.Embed(color=self.ctx.bot.cache.guild_color(self.ctx.guild.id))
         _e.description = (
             "Do you want to add scrims of remove scrims from this slot-m?\n\n"
             f"Current scrims: {', '.join(f'`{str(_)}`' for _ in self.record.scrim_ids)}"

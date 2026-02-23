@@ -69,7 +69,7 @@ class TourneyGroupManager(EsportsBaseView):
         if len(self.ctx.guild.channels) >= 490:
             return await self.ctx.error("Too many channels in server. Please delete some first.", 4)
 
-        _e = discord.Embed(color=0x00FFB3)
+        _e = discord.Embed(color=self.ctx.bot.cache.guild_color(self.ctx.guild.id))
         _e.description = (
             "**Enter the format for group roles & channels creation.**\n"
             "*`{0}` will be replaced by the number of group or roles*\n\nExamples:"

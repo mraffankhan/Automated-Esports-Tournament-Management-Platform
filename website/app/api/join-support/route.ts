@@ -16,7 +16,6 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
         }
 
-        // Add user to guild
         const response = await fetch(`https://discord.com/api/v10/guilds/${guildId}/members/${userId}`, {
             method: 'PUT',
             headers: {
@@ -32,8 +31,10 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ success: true });
         } else {
             const errorData = await response.json().catch(() => ({}));
-            console.error('Discord API Error:', response.status, errorData);
-            return NextResponse.json({ error: 'Failed to join server', details: errorData }, { status: response.status });
+            console.error('Discord join-support error:', response.status, errorData);
+            // Return 200 with success:false — don't forward Discord's status code
+            // (forwarding 404 makes browser think THIS route doesn't exist)
+            return NextResponse.json({ success: false, error: 'Could not join support server' });
         }
 
     } catch (error) {

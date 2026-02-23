@@ -8,7 +8,7 @@ from datetime import timedelta
 import dateparser
 import discord
 
-from core import Context, PotatoView
+from core import Context, ArgonView
 from models import BanLog, BannedTeam, Scrim
 from utils import discord_timestamp, emote, get_chunks, plural, truncate_string
 
@@ -148,7 +148,7 @@ class UnBan(ScrimsButton):
         if not (banned_teams := await self.view.record.banned_teams.order_by("id")):
             return await self.view.ctx.error("No banned user found.", 5)
 
-        v = PotatoView(self.view.ctx)
+        v = ArgonView(self.view.ctx)
         for chunk in get_chunks(banned_teams, 25):
             v.add_item(BanSelector(self.view.ctx, chunk))
         v.message = await interaction.followup.send("", view=v, ephemeral=True)
@@ -219,7 +219,7 @@ class MainInput(discord.ui.Modal, title="Ban Time & Reason"):
 
 
 class BanSelector(discord.ui.Select):
-    view: PotatoView
+    view: ArgonView
 
     def __init__(self, ctx: Context, teams: T.List[BannedTeam]):
         _options = []

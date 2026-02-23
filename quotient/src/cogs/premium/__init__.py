@@ -4,7 +4,7 @@ import asyncio
 import typing
 
 if typing.TYPE_CHECKING:
-    from core import Potato
+    from core import Argon
 
 from contextlib import suppress
 from datetime import datetime, timedelta
@@ -24,12 +24,12 @@ from .views import PremiumPurchaseBtn, PremiumView
 
 
 class PremiumCog(Cog, name="Premium"):
-    def __init__(self, bot: Potato):
+    def __init__(self, bot: Argon):
         self.bot = bot
         self.remind_peeps_to_pay.start()
         self.hook = discord.Webhook.from_url(self.bot.config.PUBLIC_LOG, session=self.bot.session) if self.bot.config.PUBLIC_LOG else None
 
-    @commands.hybrid_command()
+    @commands.hybrid_command(aliases=("status",))
     @commands.bot_has_permissions(embed_links=True)
     async def pstatus(self, ctx: Context):
         """Get your Potato Premium status and the current server's."""
@@ -49,7 +49,7 @@ class PremiumCog(Cog, name="Premium"):
             booster = guild.booster or await self.bot.fetch_user(guild.made_premium_by)
             btext = f"\n> Activated: Yes!\n> Ending: {discord_timestamp(guild.premium_end_time,'f')}\n> Upgraded by: **{booster}**"
 
-        embed = self.bot.embed(ctx, title="Potato Premium", url=f"{self.bot.config.WEBSITE}")
+        embed = self.bot.embed(ctx, title="Argon Premium", url=f"{self.bot.config.WEBSITE}")
         embed.add_field(name="User", value=atext, inline=False)
         embed.add_field(name="Server", value=btext, inline=False)
         embed.set_thumbnail(url=ctx.guild.me.display_avatar.url)
@@ -57,11 +57,11 @@ class PremiumCog(Cog, name="Premium"):
 
     @commands.hybrid_command(aliases=("perks", "pro"))
     async def premium(self, ctx: Context):
-        """Checkout Potato Premium Plans."""
+        """Checkout Argon Premium Plans."""
         _e = discord.Embed(
             color=self.bot.color,
-            description=f"[**Features of Potato Premium -**]({self.bot.config.SERVER_LINK})\n\n"
-            f"{emote.check} Access to `Potato Premium` bot.\n"
+            description=f"[**Features of Argon Premium -**]({self.bot.config.SERVER_LINK})\n\n"
+            f"{emote.check} Access to `Argon Premium` bot.\n"
             f"{emote.check} Unlimited Scrims.\n"
             f"{emote.check} Unlimited Tournaments.\n"
             f"{emote.check} Custom Reactions for Regs.\n"
@@ -94,7 +94,7 @@ class PremiumCog(Cog, name="Premium"):
                 await self.bot.reminders.create_timer(guild.premium_end_time, "guild_premium", guild_id=guild.pk)
 
             if _g:
-                await remind_guild_to_pay(_g, guild)
+                await remind_guild_to_pay(_g, guild, self.bot.cache.guild_color(guild.pk))
 
     async def ensure_reminders(self, _id: int, _time: datetime) -> bool:
         return await Timer.filter(
@@ -123,10 +123,10 @@ class PremiumCog(Cog, name="Premium"):
 
         if (_ch := _g.private_ch) and _ch.permissions_for(_ch.guild.me).embed_links:
             _e = discord.Embed(
-                color=discord.Color.red(), title="⚠️__**Potato Pro Subscription Ended**__⚠️", url=config.SERVER_LINK
+                color=discord.Color.red(), title="⚠️__**Argon Pro Subscription Ended**__⚠️", url=config.SERVER_LINK
             )
             _e.description = (
-                "This is to inform you that your subscription of Potato Pro has been ended.\n\n"
+                "This is to inform you that your subscription of Argon Pro has been ended.\n\n"
                 "*Following is a list of perks or data you lost:*"
             )
 
@@ -138,7 +138,7 @@ class PremiumCog(Cog, name="Premium"):
                 if all((role.permissions.administrator, not role.managed, role.members))
             ]
 
-            _view = PremiumView()
+            _view = PremiumView(discord.Color.red())
             await _ch.send(
                 embed=_e,
                 view=_view,
@@ -174,7 +174,7 @@ class PremiumCog(Cog, name="Premium"):
 
         with suppress(discord.HTTPException, AttributeError):
             _e = discord.Embed(
-                color=discord.Color.gold(), description=f"Thanks **{member}** for purchasing Potato Premium."
+                color=discord.Color.gold(), description=f"Thanks **{member}** for purchasing Argon Premium."
             )
             _e.set_image(url=random_thanks())
             await self.hook.send(embed=_e, username="premium-logs", avatar_url=self.bot.config.PREMIUM_AVATAR)
@@ -184,17 +184,17 @@ class PremiumCog(Cog, name="Premium"):
 
         _e = discord.Embed(
             color=self.bot.color,
-            title="Potato Pro Purchase Successful!",
+            title="Argon Pro Purchase Successful!",
             url=self.bot.config.SERVER_LINK,
             description=(
                 f"{random_greeting()} {member.mention},\n"
-                f"Thanks for purchasing Potato Premium. Your server **{upgraded_guild}** has access to Potato Pro features until `{_guild.premium_end_time.strftime('%d-%b-%Y %I:%M %p')}`.\n\n"
-                "[Click me to Invite Potato Pro Bot to your server](https://discord.com/oauth2/authorize?client_id=902856923311919104&scope=applications.commands%20bot&permissions=21175985838)\n"
+                f"Thanks for purchasing Argon Premium. Your server **{upgraded_guild}** has access to Argon Pro features until `{_guild.premium_end_time.strftime('%d-%b-%Y %I:%M %p')}`.\n\n"
+                "[Click me to Invite Argon Pro Bot to your server](https://discord.com/oauth2/authorize?client_id=902856923311919104&scope=applications.commands%20bot&permissions=21175985838)\n"
             ),
         )
 
         if member not in self.bot.server.members:
-            _e.description += f"\n\n[To claim your Premium Role, Join Potato HQ]({self.bot.config.SERVER_LINK})."
+            _e.description += f"\n\n[To claim your Premium Role, Join Argon HQ]({self.bot.config.SERVER_LINK})."
 
         _view = discord.ui.View(timeout=None)
 
@@ -204,5 +204,5 @@ class PremiumCog(Cog, name="Premium"):
             pass
 
 
-async def setup(bot: Potato) -> None:
+async def setup(bot: Argon) -> None:
     await bot.add_cog(PremiumCog(bot))

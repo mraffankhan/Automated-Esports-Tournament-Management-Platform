@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from difflib import get_close_matches
+from contextlib import suppress
 from typing import List, Mapping
 
 import discord
@@ -8,9 +9,192 @@ from discord.ext import commands
 
 import config
 from models import Guild
-from utils import LinkButton, LinkType, QuoPaginator, discord_timestamp, truncate_string
+from utils import LinkButton, LinkType, ArgonPaginator, discord_timestamp, truncate_string, emote
 
 from .Cog import Cog
+
+
+
+import discord
+from discord.ext import commands
+
+import config
+from models import Guild
+from utils import LinkButton, LinkType, ArgonPaginator, discord_timestamp, truncate_string, emote
+
+from .Cog import Cog
+
+
+class HelpSelect(discord.ui.Select):
+    def __init__(self, mapping, ctx):
+        self.mapping = mapping
+        self.ctx = ctx
+        
+        # Parse emojis
+        check_emoji = discord.PartialEmoji.from_str(emote.check)
+        arrow_emoji = discord.PartialEmoji.from_str(emote.arrow)
+        
+        options = [
+            discord.SelectOption(
+                label="Main Menu",
+                description="Return to the main help menu",
+                emoji=check_emoji,
+                value="main"
+            )
+        ]
+        
+        # Filter and sort cogs
+        hidden = ("HelpCog", "Dev", "NoPrefixCmd", "ArgonAlerts", "Jishaku")
+        sorted_cogs = sorted(mapping.items(), key=lambda x: x[0].qualified_name if x[0] else "")
+        
+        for cog, cmds in sorted_cogs:
+            if cog and cog.qualified_name not in hidden and cmds:
+                options.append(discord.SelectOption(
+                    label=cog.qualified_name.title(),
+                    description=f"View commands for {cog.qualified_name}",
+                    emoji=arrow_emoji,
+                    value=cog.qualified_name
+                ))
+
+        super().__init__(placeholder="Select a module...", min_values=1, max_values=1, options=options[:25])
+
+    async def callback(self, interaction: discord.Interaction):
+        if interaction.user.id != self.ctx.author.id:
+            return await interaction.response.send_message("This menu is not for you.", ephemeral=True)
+
+        value = self.values[0]
+        
+        if value == "main":
+            # Reconstruct main menu
+            embed = await self.view.get_main_embed()
+            await interaction.response.edit_message(embed=embed, view=self.view)
+        else:
+            # Find selected cog
+            selected_cog = None
+            for cog, _ in self.mapping.items():
+                if cog and cog.qualified_name == value:
+                    selected_cog = cog
+                    break
+            
+            if selected_cog:
+                # Create cog embed using existing logic or new design
+                desc = selected_cog.description + "\n\n" if selected_cog.description else ""
+                embed = discord.Embed(
+                    title=f"{emote.arrow} **__{selected_cog.qualified_name.title()}__**",
+                    description=desc,
+                    color=self.ctx.guild_color
+                )
+                
+                cmds_text = ""
+                for cmd in selected_cog.get_commands():
+                    if not cmd.hidden:
+                        cmds_text += f"`{cmd.qualified_name}`\n"
+                
+                embed.add_field(name="**__Commands__**", value=cmds_text or "No commands found.", inline=False)
+                embed.set_footer(text=f"Requested by {self.ctx.author}", icon_url=self.ctx.author.display_avatar.url)
+                
+                await interaction.response.edit_message(embed=embed, view=self.view)
+
+
+class HelpView(discord.ui.View):
+    def __init__(self, mapping, ctx):
+        super().__init__(timeout=120)
+        self.ctx = ctx
+        self.mapping = mapping
+        self.add_item(HelpSelect(mapping, ctx))
+        
+        # Add link buttons
+        self.add_item(discord.ui.Button(label="Support Server", url=config.SERVER_LINK, style=discord.ButtonStyle.link))
+        self.add_item(discord.ui.Button(label="Invite Me", url=config.BOT_INVITE, style=discord.ButtonStyle.link))
+
+    @discord.ui.button(label="List View", style=discord.ButtonStyle.primary, custom_id="list_all", row=2)
+    async def list_all(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user.id != self.ctx.author.id:
+            return await interaction.response.send_message("This menu is not for you.", ephemeral=True)
+
+        if button.label == "List View":
+            embed = await self.get_all_commands_embed()
+            button.label = "Main Menu"
+            await interaction.response.edit_message(embed=embed, view=self)
+        else:
+            embed = await self.get_main_embed()
+            button.label = "List View"
+            await interaction.response.edit_message(embed=embed, view=self)
+
+    def __init__(self, mapping, ctx):
+        super().__init__(timeout=120)
+        self.ctx = ctx
+        self.mapping = mapping
+        
+        # Select Menu (Row 0 by default, but nice to be explicit if we use rows elsewhere)
+        self.add_item(HelpSelect(mapping, ctx))
+        
+        # Link Buttons (Row 1)
+        self.add_item(discord.ui.Button(label="Support Server", url=config.SERVER_LINK, style=discord.ButtonStyle.link, row=1))
+        self.add_item(discord.ui.Button(label="Invite Me", url=config.BOT_INVITE, style=discord.ButtonStyle.link, row=1))
+        self.add_item(discord.ui.Button(label="Website", url=config.WEBSITE, style=discord.ButtonStyle.link, row=1))
+
+    async def get_all_commands_embed(self):
+        ctx = self.ctx
+        embed = discord.Embed(
+            title=f"{emote.check} **__All Modules & Commands__**",
+            color=ctx.guild_color
+        )
+        
+        hidden = ("HelpCog", "Dev", "NoPrefixCmd", "ArgonAlerts", "Jishaku")
+        sorted_cogs = sorted(self.mapping.items(), key=lambda x: x[0].qualified_name if x[0] else "")
+        
+        for cog, cmds in sorted_cogs:
+            if cog and cog.qualified_name not in hidden and cmds:
+                cmds_text = ", ".join(f"`{c.qualified_name}`" for c in cmds if not c.hidden)
+                if cmds_text:
+                    embed.add_field(name=cog.qualified_name.title(), value=cmds_text, inline=False)
+        
+        embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
+        return embed
+
+    async def get_main_embed(self):
+        ctx = self.ctx
+        is_premium_bool = await ctx.is_premium_guild()
+        is_premium = "Yes" if is_premium_bool else "No"
+        
+        embed = discord.Embed(
+            title=f"{emote.check} **__Help Menu__**",
+            description="",
+            color=ctx.guild_color
+        )
+        
+        # Basic Info
+        prefix = ctx.bot.cache.guild_data[ctx.guild.id].get("prefix", config.PREFIX)
+        embed.description += (
+            f"{emote.arrow} **__Basic Info__**\n"
+            f"**Prefix:** `{prefix}`\n"
+            f"**Premium:** `{is_premium}`\n\n"
+        )
+        
+        # Modules List
+        embed.description += f"{emote.arrow} **__Modules__**\n"
+        hidden = ("HelpCog", "Dev", "NoPrefixCmd", "ArgonAlerts", "Jishaku")
+        sorted_cogs = sorted(self.mapping.items(), key=lambda x: x[0].qualified_name if x[0] else "")
+        
+        module_list = []
+        for cog, cmds in sorted_cogs:
+            if cog:
+                with open("help_debug.log", "a", encoding="utf-8") as f:
+                    f.write(f"Cog={cog.qualified_name} Hidden={cog.qualified_name in hidden} Cmds={len(cmds)}\n")
+                    for c in cmds:
+                        f.write(f"  - {c.name} (Hidden: {c.hidden})\n")
+            if cog and cog.qualified_name not in hidden and cmds:
+                module_list.append(f"{emote.arrow} **{cog.qualified_name.title()}**")
+        
+        embed.description += "\n".join(module_list) + "\n\n"
+        
+        # Links
+        embed.description += f"{emote.arrow} **__Links__**\n"
+        embed.description += f"[**__Support Server__**]({config.SERVER_LINK}) | [**__Invite Me__**]({config.BOT_INVITE}) | [**__Website__**]({config.WEBSITE})"
+        
+        embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
+        return embed
 
 
 class HelpCommand(commands.HelpCommand):
@@ -25,54 +209,18 @@ class HelpCommand(commands.HelpCommand):
 
     @property
     def color(self):
-        return self.context.bot.color
+        return self.context.guild_color
 
     async def send_bot_help(self, mapping: Mapping[Cog, List[commands.Command]]):
         ctx = self.context
-
-        hidden = ("HelpCog", "Dev")
-
-        embed = discord.Embed(color=self.color)
-
-        server = f"[Support Server]({config.SERVER_LINK})"
-        invite = f"[Invite Me]({config.BOT_INVITE})"
-        dashboard = f"[Website]({config.WEBSITE})"
-
-        embed.description = f"{server} **|** {invite} **|** {dashboard}\n\n"
-
-        guild = await Guild.get_or_none(pk=ctx.guild.id)
-        if guild and guild.is_premium:
-            embed.description += f"<a:top_user:807911932299837460> [__Server Premium ending:__]({config.SERVER_LINK}) {discord_timestamp(guild.premium_end_time)}"
-
-        slash_cmds = await ctx.bot.tree.fetch_commands()
-        if ctx.guild:
-            try:
-                guild_cmds = await ctx.bot.tree.fetch_commands(guild=ctx.guild)
-                slash_cmds.extend(guild_cmds)
-            except discord.HTTPException:
-                pass
-
-        for cog, cmds in mapping.items():
-            if cog and cog.qualified_name not in hidden and await self.filter_commands(cmds, sort=True):
-                embed.add_field(
-                    inline=False,
-                    name=cog.qualified_name.title(),
-                    value=", ".join(map(lambda x: f"`{x}`", cog.get_commands())),
-                )
-
-        if slash_cmds:
-            # Sort slash commands?
-            slash_cmds = sorted(slash_cmds, key=lambda c: c.name)
-            slash_strings = [f"{i.mention}" for i in slash_cmds]
-            embed.add_field(name="Slash Commands", value=", ".join(slash_strings), inline=False)
-
-        links = [
-            LinkType("Support Server", config.SERVER_LINK),
-            LinkType("Invite Me", config.BOT_INVITE),
-        ]
-        await ctx.send(embed=embed, embed_perms=True, view=LinkButton(links))
+        
+        view = HelpView(mapping, ctx)
+        embed = await view.get_main_embed()
+        
+        view.message = await ctx.send(embed=embed, view=view)
 
     async def send_group_help(self, group: commands.Group):
+        # ... (Keep existing group help or adapt similarly if requested, sticking to existing logic for now)
         prefix = self.context.prefix
 
         if not group.commands:
@@ -111,16 +259,21 @@ class HelpCommand(commands.HelpCommand):
         await self.context.send(embed=embed, embed_perms=True)
 
     async def send_cog_help(self, cog: Cog):
-        paginator = QuoPaginator(self.context, per_page=14)
-        c = 0
+        # Adapting to new style if directly invoked
+        embed = discord.Embed(
+            title=f"{emote.arrow} **__{cog.qualified_name.title()}__**",
+            description=f"{cog.description or 'No description provided.'}\n\n",
+            color=self.context.guild_color
+        )
+        
+        cmds_text = ""
         for cmd in cog.get_commands():
-            if not cmd.hidden:
-                _brief = "No Information..." if not cmd.short_doc else truncate_string(cmd.short_doc, 60)
-                paginator.add_line(f"`{cmd.qualified_name}` : {_brief}")
-                c += 1
-
-        paginator.title = f"{cog.qualified_name.title()} ({c})"
-        await paginator.start()
+             if not cmd.hidden:
+                  cmds_text += f"`{cmd.qualified_name}`\n"
+        
+        embed.add_field(name="**__Commands__**", value=cmds_text or "No commands found.", inline=False)
+        embed.set_footer(text=f"Requested by {self.context.author}", icon_url=self.context.author.display_avatar.url)
+        await self.context.send(embed=embed)
 
     async def send_command_help(self, cmd: commands.Command):
         embed = discord.Embed(color=self.color)

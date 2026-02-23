@@ -7,14 +7,14 @@ from cogs.esports.views.scrims.main import ScrimsMain
 from cogs.esports.views.tourney.main import TourneyManager
 
 if typing.TYPE_CHECKING:
-    from core import Potato
+    from core import Argon
 
 import discord
 from discord.ext import commands
 
-from core import Cog, Context, PotatoView
+from core import Cog, Context, ArgonView
 from models import *
-from utils import QuoRole, QuoTextChannel, checks
+from utils import ArgonRole, ArgonTextChannel, checks
 
 from .errors import SMError
 from .events import ScrimEvents, Ssverification, TagEvents, TourneyEvents
@@ -24,7 +24,7 @@ from .views import *
 
 
 class ScrimManager(Cog, name="Esports"):
-    def __init__(self, bot: Potato):
+    def __init__(self, bot: Argon):
         self.bot = bot
 
     # ************************************************************************************************
@@ -60,7 +60,7 @@ class ScrimManager(Cog, name="Esports"):
     @commands.cooldown(1, 15, type=commands.BucketType.guild)
     async def smanager(self, ctx: Context):
         """
-        Contains commands related to Potato's powerful scrims manager.
+        Contains commands related to Argon's powerful scrims manager.
         """
         if not any((ctx.author.guild_permissions.manage_guild, Scrim.is_ignorable(ctx.author))):
             return await ctx.error(f"You need `scrims-mod` role or `Manage-Server` permissions to use this command.")
@@ -78,14 +78,14 @@ class ScrimManager(Cog, name="Esports"):
     )
     @commands.cooldown(1, 15, type=commands.BucketType.guild)
     async def tourney(self, ctx: Context):
-        """Create & Manage tournaments with Potato"""
+        """Create & Manage tournaments with Argon"""
         if not Tourney.is_ignorable(ctx.author) and not ctx.author.guild_permissions.manage_guild:
             return await ctx.error(
                 "You need either `Manage Server` permissions or `@tourney-mod` role to manage tournaments."
             )
 
         view = TourneyManager(ctx)
-        view.add_item(PotatoView.tricky_invite_button())
+        view.add_item(ArgonView.tricky_invite_button())
         view.message = await ctx.send(embed=await view.initial_embed(), view=view)
 
     @commands.hybrid_command(
@@ -123,7 +123,7 @@ class ScrimManager(Cog, name="Esports"):
 
     @commands.group(aliases=("eztag",), invoke_without_command=True)
     async def easytag(self, ctx: Context):
-        """Commands related to quotient's eztag"""
+        """Commands related to argon's eztag"""
         await ctx.send_help(ctx.command)
 
     @easytag.command(name="set", extras={"examples": ["eztag set #channel"]})
@@ -131,14 +131,14 @@ class ScrimManager(Cog, name="Esports"):
     @commands.bot_has_guild_permissions(manage_roles=True)
     @commands.has_permissions(manage_guild=True)
     @commands.cooldown(1, 10, type=commands.BucketType.guild)
-    async def set_eztag(self, ctx: Context, *, channel: QuoTextChannel):
+    async def set_eztag(self, ctx: Context, *, channel: ArgonTextChannel):
         """Set a channel as eztag channel."""
         count = await EasyTag.filter(guild_id=ctx.guild.id).count()
         guild = await Guild.get(guild_id=ctx.guild.id)
 
         if count == 1 and not guild.is_premium:
             return await ctx.error(
-                f"Upgrade your server to Potato Premium to setup more than 1 EasyTag channel.\n[Click Me to Purchase]({self.bot.prime_link})"
+                f"Upgrade your server to Argon Premium to setup more than 1 EasyTag channel.\n[Click Me to Purchase]({self.bot.prime_link})"
             )
 
         if channel.id in self.bot.cache.eztagchannels:
@@ -153,10 +153,10 @@ class ScrimManager(Cog, name="Esports"):
                 f"I need `send messages`, `embed links` and `manage messages` permission in {channel.mention}"
             )
 
-        role = discord.utils.get(ctx.guild.roles, name="quotient-tag-ignore")
+        role = discord.utils.get(ctx.guild.roles, name="argon-tag-ignore")
         if not role:
             role = await ctx.guild.create_role(
-                name="quotient-tag-ignore", color=self.bot.color, reason=f"Created by {ctx.author}"
+                name="argon-tag-ignore", color=self.bot.color, reason=f"Created by {ctx.author}"
             )
 
         await EasyTag.create(guild_id=ctx.guild.id, channel_id=channel.id)
@@ -164,9 +164,9 @@ class ScrimManager(Cog, name="Esports"):
 
         embed = self.bot.embed(ctx, title="Easy Tagging")
         embed.description = """
-        Unable to mention teammates while registering for scrims or tournaments? Potato is here for the rescue.
+        Unable to mention teammates while registering for scrims or tournaments? Argon is here for the rescue.
 
-        Use `teammate's ID`, `@teammate_name` or `@teammate's_discord_tag` in your registration format. Potato will convert that into an actual discord tag.        
+        Use `teammate's ID`, `@teammate_name` or `@teammate's_discord_tag` in your registration format. Argon will convert that into an actual discord tag.        
         """
         embed.set_image(url="https://media.discordapp.net/attachments/775707108192157706/850788091236450344/eztags.gif")
         msg = await channel.send(embed=embed)
@@ -180,7 +180,7 @@ class ScrimManager(Cog, name="Esports"):
     # @checks.has_done_setup()
     @commands.has_permissions(manage_guild=True)
     @commands.cooldown(1, 10, type=commands.BucketType.guild)
-    async def remove_eztag(self, ctx: Context, *, channel: QuoTextChannel):
+    async def remove_eztag(self, ctx: Context, *, channel: ArgonTextChannel):
         """Remove a eztag channel"""
         if not channel.id in self.bot.cache.eztagchannels:
             return await ctx.error(f"This is not a EasyTag channel.")
@@ -215,7 +215,7 @@ class ScrimManager(Cog, name="Esports"):
     #    @checks.has_done_setup()
     @commands.has_permissions(manage_guild=True)
     @commands.cooldown(1, 10, type=commands.BucketType.guild)
-    async def delete_eztag(self, ctx: Context, channel: QuoTextChannel):
+    async def delete_eztag(self, ctx: Context, channel: ArgonTextChannel):
         """Enable/Disable autodelete for eztag."""
         record = await EasyTag.get_or_none(channel_id=channel.id)
         if not record:
@@ -255,7 +255,7 @@ class ScrimManager(Cog, name="Esports"):
 
         if count == 1 and not guild.is_premium:
             return await ctx.error(
-                f"Upgrade your server to Potato Premium to setup more than 1 Tagcheck channel.\n[Click Me to Purchase]({self.bot.prime_link})"
+                f"Upgrade your server to Argon Premium to setup more than 1 Tagcheck channel.\n[Click Me to Purchase]({self.bot.prime_link})"
             )
 
         if channel.id in self.bot.cache.tagcheck:
@@ -270,10 +270,10 @@ class ScrimManager(Cog, name="Esports"):
                 f"I need `send_messages`, `embed_links` and `manage_messages` permission in {channel.mention}"
             )
 
-        role = discord.utils.get(ctx.guild.roles, name="quotient-tag-ignore")
+        role = discord.utils.get(ctx.guild.roles, name="argon-tag-ignore")
         if not role:
             role = await ctx.guild.create_role(
-                name="quotient-tag-ignore", color=self.bot.color, reason=f"Created by {ctx.author}"
+                name="argon-tag-ignore", color=self.bot.color, reason=f"Created by {ctx.author}"
             )
 
         await TagCheck.create(guild_id=ctx.guild.id, channel_id=channel.id, required_mentions=mentions)
@@ -310,7 +310,7 @@ class ScrimManager(Cog, name="Esports"):
     @tagcheck.command(name="remove", extras={"examples": ["tagcheck remove #channel"]})
     @commands.has_permissions(manage_guild=True)
     @commands.cooldown(1, 10, type=commands.BucketType.guild)
-    async def tagcheck_remove(self, ctx: Context, *, channel: QuoTextChannel):
+    async def tagcheck_remove(self, ctx: Context, *, channel: ArgonTextChannel):
         """Remove a channel from tagcheck"""
         if not channel.id in self.bot.cache.tagcheck:
             return await ctx.error(f"This is not a TagCheck channel.")
@@ -322,7 +322,7 @@ class ScrimManager(Cog, name="Esports"):
     @tagcheck.command(name="autodelete", extras={"examples": ["tagcheck autodelete #channel"]})
     @commands.has_permissions(manage_guild=True)
     @commands.cooldown(1, 10, type=commands.BucketType.guild)
-    async def tagcheck_autodelete(self, ctx: Context, *, channel: QuoTextChannel):
+    async def tagcheck_autodelete(self, ctx: Context, *, channel: ArgonTextChannel):
         """Enable/Disable autodelete wrong tagchecks."""
         record = await TagCheck.get_or_none(channel_id=channel.id)
         if not record:
@@ -353,7 +353,7 @@ class ScrimManager(Cog, name="Esports"):
         """
         _view = ScrimsSlotManagerSetup(ctx)
         _e = await _view.initial_message(ctx.guild)
-        _view.add_item(PotatoView.tricky_invite_button())
+        _view.add_item(ArgonView.tricky_invite_button())
         _view.message = await ctx.send(embed=_e, view=_view, embed_perms=True)
 
     @commands.command(name="banlog", extras={"examples": ["banlog #channel"]})
@@ -395,7 +395,7 @@ class ScrimManager(Cog, name="Esports"):
         _view.message = await ctx.send(embed=await _view.initial_message(), view=_view, embed_perms=True)
 
 
-async def setup(bot: Potato):
+async def setup(bot: Argon):
     await bot.add_cog(ScrimManager(bot))
     await bot.add_cog(SMError(bot))
     await bot.add_cog(ScrimEvents(bot))

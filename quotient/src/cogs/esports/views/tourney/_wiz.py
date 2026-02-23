@@ -44,7 +44,9 @@ class TourneySetupWizard(TourneyView):
             f"Reactions {self.bot.config.PRIME_EMOJI}": f"{self.record.check_emoji},{self.record.cross_emoji}",
         }
 
-        _e = discord.Embed(color=0x00FFB3, title="Enter details & Press Save", url=self.bot.config.SERVER_LINK)
+        _e = discord.Embed(
+            color=self.ctx.bot.cache.guild_color(self.ctx.guild.id), title="Enter details & Press Save", url=self.bot.config.SERVER_LINK
+        )
 
         for idx, (name, value) in enumerate(fields.items()):
             _e.add_field(

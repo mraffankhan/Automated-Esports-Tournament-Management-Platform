@@ -6,7 +6,7 @@ from contextlib import suppress
 from cogs.esports.helpers.tourney import get_tourney_from_channel
 
 if typing.TYPE_CHECKING:
-    from core import Potato
+    from core import Argon
 
 import asyncio
 from unicodedata import normalize
@@ -30,7 +30,7 @@ from ..helpers import (
 
 
 class TourneyEvents(Cog):
-    def __init__(self, bot: Potato):
+    def __init__(self, bot: Argon):
         self.bot = bot
         self.__tourney_lock = asyncio.Lock()
 
@@ -305,20 +305,20 @@ class TourneyEvents(Cog):
 
     @Cog.listener()
     async def on_guild_channel_update(self, before: discord.TextChannel, after: discord.TextChannel):
-        if before.name == after.name or not before.name == "quotient-tourney-logs":
+        if before.name == after.name or not before.name == "argon-tourney-logs":
             return
 
         if after.permissions_for(after.guild.me).manage_channels:
             return await after.edit(
-                name="quotient-tourney-logs",
+                name="argon-tourney-logs",
                 reason="tourney logging won't work if you rename this.",
             )
 
         _e = discord.Embed(
             color=discord.Color.red(),
             description=(
-                "Someone renamed this channel kindly rename it back to `quotient-tourney-logs`, "
-                "**Potato Tourneys won't work without it.**"
+                "Someone renamed this channel kindly rename it back to `argon-tourney-logs`, "
+                "**Argon Tourneys won't work without it.**"
             ),
         )
         await after.send(
@@ -336,12 +336,12 @@ class TourneyEvents(Cog):
         _e = discord.Embed(
             color=discord.Color.red(),
             description=(
-                f"Someone renamed Potato's tourney-mod role to {after.mention}, kindly rename it back to `tourney-mod`."
-                "**Potato Tourneys need the name of this role to be `tourney-mod`**"
+                f"Someone renamed Argon's tourney-mod role to {after.mention}, kindly rename it back to `tourney-mod`."
+                "**Argon Tourneys need the name of this role to be `tourney-mod`**"
             ),
         )
 
-        c = discord.utils.get(after.guild.text_channels, name="quotient-tourney-logs")
+        c = discord.utils.get(after.guild.text_channels, name="argon-tourney-logs")
         if c:
             await c.send(
                 embed=_e, content=getattr(after.guild.owner, "mention")

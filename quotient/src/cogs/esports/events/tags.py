@@ -3,7 +3,7 @@ from __future__ import annotations
 import typing
 
 if typing.TYPE_CHECKING:
-    from core import Potato
+    from core import Argon
 
 import re
 from contextlib import suppress
@@ -18,7 +18,7 @@ from ..helpers import EasyMemberConverter, delete_denied_message
 
 
 class TagEvents(Cog):
-    def __init__(self, bot: Potato):
+    def __init__(self, bot: Argon):
         self.bot = bot
 
     @Cog.listener(name="on_message")
@@ -110,8 +110,11 @@ class TagEvents(Cog):
             msg = await ctx.reply(f"```{message.clean_content}\nDiscord Tags: {mentions}```")
 
             if eztag.delete_after:
-                self.bot.loop.create_task(delete_denied_message(message, 60))
-                self.bot.loop.create_task(delete_denied_message(msg, 60))
+                try:
+                    self.bot.loop.create_task(delete_denied_message(message, 60))
+                    self.bot.loop.create_task(delete_denied_message(msg, 60))
+                except (discord.NotFound, discord.Forbidden):
+                    pass
 
     @Cog.listener(name="on_guild_channel_delete")
     async def on_channel_delete(self, channel: discord.abc.GuildChannel) -> None:

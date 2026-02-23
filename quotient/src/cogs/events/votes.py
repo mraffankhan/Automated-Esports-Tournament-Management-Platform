@@ -3,7 +3,7 @@ from __future__ import annotations
 import typing
 
 if typing.TYPE_CHECKING:
-    from core import Potato
+    from core import Argon
 
 import discord
 from discord import Webhook
@@ -14,7 +14,7 @@ from models import Timer, User, Votes
 
 
 class VotesCog(Cog):
-    def __init__(self, bot: Potato):
+    def __init__(self, bot: Argon):
         self.bot = bot
         self.hook = Webhook.from_url(self.bot.config.PUBLIC_LOG, session=self.bot.session) if self.bot.config.PUBLIC_LOG else None
 

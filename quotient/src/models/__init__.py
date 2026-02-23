@@ -3,7 +3,7 @@ from __future__ import annotations
 import typing
 
 if typing.TYPE_CHECKING:
-    from core import Potato
+    from core import Argon
 
 from tortoise import models
 
@@ -14,7 +14,7 @@ class BaseDbModel(models.Model):
     class Meta:
         abstract = True
 
-    bot: Potato
+    bot: Argon
 
 
 from .helpers import *

@@ -6,7 +6,7 @@ import discord
 
 from core import Context
 from models import ReservedSlot, Scrim
-from utils import BetterFutureTime, QuoMember, emote, string_input, truncate_string
+from utils import BetterFutureTime, ArgonMember, emote, string_input, truncate_string
 
 from ._base import ScrimsButton, ScrimsView
 from ._btns import Discard
@@ -111,7 +111,7 @@ class NewReserve(ScrimsButton):
 
             owner_id = None
             if team_owner.strip().lower() != "none":
-                owner = await QuoMember().convert(self.ctx, team_owner.strip())
+                owner = await ArgonMember().convert(self.ctx, team_owner.strip())
                 owner_id = owner.id
 
             expire = None

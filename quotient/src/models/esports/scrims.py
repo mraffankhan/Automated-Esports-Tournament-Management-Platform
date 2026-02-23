@@ -26,7 +26,7 @@ class Scrim(BaseDbModel):
 
     id = fields.BigIntField(pk=True, index=True)
     guild_id = fields.BigIntField()
-    name = fields.TextField(default="Potato-Scrims")
+    name = fields.TextField(default="Argon-Scrims")
     registration_channel_id = fields.BigIntField(index=True)
     slotlist_channel_id = fields.BigIntField()
     slotlist_message_id = fields.BigIntField(null=True)
@@ -98,7 +98,7 @@ class Scrim(BaseDbModel):
     @property
     def logschan(self):
         if self.guild is not None:
-            return discord.utils.get(self.guild.text_channels, name="quotient-scrims-logs")
+            return discord.utils.get(self.guild.text_channels, name="argon-scrims-logs")
 
     @property
     def modrole(self):
@@ -257,7 +257,7 @@ class Scrim(BaseDbModel):
         if not reminders:
             return
 
-        _e = discord.Embed(color=0x00FFB3, title=f"Slot Available to Claim - {channel.guild.name}", url=link)
+        _e = discord.Embed(color=self.bot.cache.guild_color(self.guild_id), title=f"Slot Available to Claim - {channel.guild.name}", url=link)
         _e.description = f"A slot of {self} is available to claim in {channel.mention}!\nClaim it before anyone else do."
 
         async for user in self.bot.resolve_member_ids(self.guild, [i.user_id for i in reminders]):
@@ -453,7 +453,7 @@ class Scrim(BaseDbModel):
                 scrims_mod: discord.PermissionOverwrite(read_messages=True),
             }
             scrims_log_channel = await guild.create_text_channel(
-                name="quotient-scrims-logs",
+                name="argon-scrims-logs",
                 overwrites=overwrites,
                 reason=_reason,
                 topic="**DO NOT RENAME THIS CHANNEL**",
@@ -467,7 +467,7 @@ class Scrim(BaseDbModel):
                     f"scrims-moderators. User with {scrims_mod.mention} can also send messages in "
                     f"registration channels and they won't be considered as scrims-registration.\n\n"
                     f"`Note`: **Do not rename this channel.**",
-                    color=0x00FFB3,
+                    color=self.bot.cache.guild_color(self.guild_id),
                 )
             )
             await note.pin()
@@ -724,8 +724,15 @@ class BanLog(BaseDbModel):
         if user:
             _e.set_thumbnail(url=getattr(user.display_avatar, "url", "https://cdn.discordapp.com/embed/avatars/0.png"))
 
+        channel = self.channel
+        if channel is None:
+            try:
+                channel = await self.bot.fetch_channel(self.channel_id)
+            except (discord.NotFound, discord.Forbidden):
+                return
+
         with suppress(discord.HTTPException, AttributeError):
-            await self.channel.send(getattr(user, "mention", ""), embed=_e)
+            await channel.send(getattr(user, "mention", ""), embed=_e)
 
     async def log_unban(self, user_id: int, mod: discord.Member, scrims: List[Scrim], reason: str = None):
         user = await self.bot.getch(self.bot.get_user, self.bot.fetch_user, user_id)
@@ -739,8 +746,15 @@ class BanLog(BaseDbModel):
         if user:
             _e.set_thumbnail(url=getattr(user.display_avatar, "url", "https://cdn.discordapp.com/embed/avatars/0.png"))
 
+        channel = self.channel
+        if channel is None:
+            try:
+                channel = await self.bot.fetch_channel(self.channel_id)
+            except (discord.NotFound, discord.Forbidden):
+                return
+
         with suppress(discord.HTTPException, AttributeError):
-            await self.channel.send(getattr(user, "mention", ""), embed=_e)
+            await channel.send(getattr(user, "mention", ""), embed=_e)
 
 
 class ScrimsSlotReminder(BaseDbModel):

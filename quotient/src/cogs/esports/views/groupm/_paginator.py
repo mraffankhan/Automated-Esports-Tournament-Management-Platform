@@ -49,7 +49,7 @@ class GroupPages(EsportsBaseView):
     @property
     def initial_embed(self):
         current_page = self.records.index(self.record) + 1
-        _e = discord.Embed(color=0x00FFB3, title=f"{self.tourney.name} - Group {current_page}")
+        _e = discord.Embed(color=self.ctx.bot.cache.guild_color(self.ctx.guild.id), title=f"{self.tourney.name} - Group {current_page}")
         _e.set_thumbnail(url=getattr(self.ctx.guild.icon, "url", None))
 
         _e.description = (

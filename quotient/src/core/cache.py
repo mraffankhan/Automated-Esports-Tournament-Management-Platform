@@ -11,9 +11,9 @@ from constants import IST
 class CacheManager:
     def __init__(self, bot):
         if TYPE_CHECKING:
-            from .Bot import Potato
+            from .Bot import Argon
 
-        self.bot: Potato = bot
+        self.bot: Argon = bot
 
         self.guild_data = {}
         self.eztagchannels = set()
@@ -25,9 +25,11 @@ class CacheManager:
         self.ssverify_channels = set()
 
         self.blocked_ids = set()
+        self.blocked_ids = set()
+        self.noprefix = {}
 
     async def fill_temp_cache(self):
-        from models import AutoPurge, BlockList, EasyTag, Guild, Scrim, SSVerify, TagCheck, Tourney
+        from models import AutoPurge, BlockList, EasyTag, Guild, Scrim, SSVerify, TagCheck, Tourney, NoPrefix
 
         async for record in Guild.all():
             self.guild_data[record.guild_id] = {
@@ -60,6 +62,9 @@ class CacheManager:
 
         async for record in BlockList.all():
             self.blocked_ids.add(record.block_id)
+
+        async for record in NoPrefix.all():
+            self.noprefix[record.user_id] = record.expires_at
 
     def guild_color(self, guild_id: int):
         return self.guild_data.get(guild_id, {}).get("color", config.COLOR)
