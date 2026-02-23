@@ -1,11 +1,11 @@
 [tool.poetry]
-name = "quotient-bot"
+name = "argon-bot"
 version = "0.1.0"
 description = ""
 authors = ["deadaf <gahlyanrohit18@gmail.com>"]
 license = "MPL 2.0"
 readme = "README.md"
-packages = [{include = "quotient_bot"}]
+packages = [{include = "argon_bot"}]
 
 [tool.poetry.dependencies]
 python = "^3.11"
