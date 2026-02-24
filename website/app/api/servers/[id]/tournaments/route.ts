@@ -19,7 +19,12 @@ export async function GET(
             return NextResponse.json({ error: 'Failed to fetch tournaments' }, { status: 500 });
         }
 
-        return NextResponse.json(data || []);
+        const tournaments = (data || []).map(t => ({
+            ...t,
+            guild_id: String(t.guild_id)
+        }));
+
+        return NextResponse.json(tournaments);
 
     } catch (error) {
         console.error('Error fetching tournaments:', error);

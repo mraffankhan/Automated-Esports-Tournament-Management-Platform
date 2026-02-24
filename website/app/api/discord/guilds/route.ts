@@ -42,36 +42,51 @@ export async function POST(req: NextRequest) {
 
         const allGuilds: any[] = await discordRes.json();
 
-        // 2. Filter to guilds where user is Owner, Administrator, or has Manage Server
-        const manageableGuilds = allGuilds.filter((g: any) => {
-            if (g.owner) return true;
-            const perms = parseInt(g.permissions);
-            return (perms & ADMINISTRATOR) === ADMINISTRATOR || (perms & MANAGE_GUILD) === MANAGE_GUILD;
+        // 1.5. Check if user is a bot developer
+        const devIds = ['1449081308616720628']; // Add any other dev IDs from config.DEVS here
+        const userRes = await fetch('https://discord.com/api/v10/users/@me', {
+            headers: { 'Authorization': `Bearer ${accessToken}` },
         });
+        const userData = userRes.ok ? await userRes.json() : null;
+        const isDev = userData && devIds.includes(userData.id);
 
-        if (manageableGuilds.length === 0) {
-            return NextResponse.json([]);
-        }
-
-        // 3. Check which of these guilds the bot is in
-        // Strategy: Use Discord Bot API to get bot's guilds (reliable), then enrich with Supabase data
         const botToken = process.env.DISCORD_BOT_TOKEN;
-
-        // 3a. Get bot's guild list from Discord API
         let botGuildIds = new Set<string>();
+        let botGuildsList: any[] = [];
+
         if (botToken) {
             try {
-                const botGuildsRes = await fetch('https://discord.com/api/v10/users/@me/guilds', {
+                const botGuildsRes = await fetch('https://discord.com/api/v10/users/@me/guilds?with_counts=true', {
                     headers: { 'Authorization': `Bot ${botToken}` },
                 });
                 if (botGuildsRes.ok) {
-                    const botGuilds: any[] = await botGuildsRes.json();
-                    botGuildIds = new Set(botGuilds.map((g: any) => g.id));
+                    botGuildsList = await botGuildsRes.json();
+                    botGuildIds = new Set(botGuildsList.map((g: any) => g.id));
                 }
             } catch (err) {
                 console.error('Error fetching bot guilds:', err);
             }
         }
+
+        // 2. Filter to manageable guilds (or ALL bot guilds if developer)
+        let manageableGuilds = [];
+
+        if (isDev) {
+            // Developers see all guilds the bot is in
+            manageableGuilds = botGuildsList;
+        } else {
+            manageableGuilds = allGuilds.filter((g: any) => {
+                if (g.owner) return true;
+                const perms = parseInt(g.permissions);
+                return (perms & ADMINISTRATOR) === ADMINISTRATOR || (perms & MANAGE_GUILD) === MANAGE_GUILD;
+            });
+        }
+
+        if (manageableGuilds.length === 0) {
+            return NextResponse.json([]);
+        }
+
+        // 3. Check which of these guilds the bot is in (already fetched above for devs)
 
         // 3b. Also check Supabase for premium/prefix data
         const guildIds = manageableGuilds.map((g: any) => g.id);
@@ -97,7 +112,10 @@ export async function POST(req: NextRequest) {
             const perms = parseInt(guild.permissions);
 
             let role = 'Admin';
-            if (guild.owner) {
+
+            if (isDev) {
+                role = 'Developer';
+            } else if (guild.owner) {
                 role = 'Owner';
             } else if ((perms & ADMINISTRATOR) === ADMINISTRATOR) {
                 role = 'Admin';
@@ -105,14 +123,19 @@ export async function POST(req: NextRequest) {
                 role = 'Manager';
             }
 
+            // Find the corresponding bot guild to get the member count
+            const botGuildInfo = botGuildsList.find((g: any) => g.id === guild.id);
+            const memberCount = botGuildInfo ? botGuildInfo.approximate_member_count : 0;
+
             return {
                 id: guild.id,
                 name: guild.name,
                 icon: guild.icon,
                 role,
-                has_bot: botGuildIds.has(guild.id),
+                has_bot: isDev ? true : botGuildIds.has(guild.id), // devs only see bot guilds anyway
                 is_premium: botData?.is_premium || false,
                 prefix: botData?.prefix || 'a',
+                member_count: memberCount,
             };
         });
 

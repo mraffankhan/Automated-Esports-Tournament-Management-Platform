@@ -11,7 +11,8 @@ export async function GET(
 
         const { data, error } = await supabase
             .from('welcome_configs')
-            .select('*')
+            // Convert channel_id to text to avoid BIGINT precision loss in JS
+            .select('*, channel_id::text')
             .eq('guild_id', guildId)
             .single();
 
@@ -20,7 +21,7 @@ export async function GET(
             return NextResponse.json({ error: 'Failed to fetch welcome config' }, { status: 500 });
         }
 
-        return NextResponse.json(data || {
+        const welcomeData = data || {
             guild_id: guildId,
             channel_id: null,
             message: 'Welcome {user} to **{server}**! You are member #{member_count}.',
@@ -28,7 +29,12 @@ export async function GET(
             embed_enabled: false,
             embed_color: 65459,
             embed_title: 'Welcome!'
-        });
+        };
+
+        // Ensure guild_id is a string and use the exact string from the URL to avoid precision loss
+        welcomeData.guild_id = guildId;
+
+        return NextResponse.json(welcomeData);
 
     } catch (error) {
         console.error('[Welcome API] Error fetching welcome config:', error);
@@ -45,17 +51,14 @@ export async function PUT(
         const body = await req.json();
         console.log(`[Welcome API] PUT request for guildId: ${guildId}`, body);
 
-        // Validate guildId matches
-        // Normalize both to strings to avoid type mismatch (BIGINT might come back as number)
-        if (body.guild_id && String(body.guild_id) !== String(guildId)) {
-            console.warn(`[Welcome API] Guild ID mismatch. Body: ${body.guild_id}, Params: ${guildId}`);
-            return NextResponse.json({ error: 'Guild ID mismatch', details: { body: body.guild_id, params: guildId } }, { status: 400 });
-        }
+        // Always override guild_id from params, discarding body's potentially precision-lost value
+        body.guild_id = guildId;
+
 
         const { data, error } = await supabase
             .from('welcome_configs')
             .upsert({
-                guild_id: guildId,
+                guild_id: guildId, // Use the ID from the URL param
                 channel_id: body.channel_id,
                 message: body.message,
                 enabled: body.enabled,
@@ -63,12 +66,17 @@ export async function PUT(
                 embed_color: body.embed_color,
                 embed_title: body.embed_title
             })
-            .select()
+            .select('*, channel_id::text')
             .single();
 
         if (error) {
             console.error('[Welcome API] Supabase error updating welcome config:', error);
             return NextResponse.json({ error: 'Failed to update welcome config' }, { status: 500 });
+        }
+
+        // Always use original guildId from URL params to ensure perfect precision
+        if (data) {
+            data.guild_id = guildId;
         }
 
         return NextResponse.json(data);

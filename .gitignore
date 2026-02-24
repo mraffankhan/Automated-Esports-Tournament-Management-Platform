@@ -16,3 +16,8 @@ build/
 .idea/
 quotient.zip
 create_zip.py
+
+*.db
+database.db
+*.sqlite
+*.sqlite3

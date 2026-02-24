@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
-import { Loader2, Shield, Server, Crown, ShieldCheck, Settings2 } from "lucide-react";
+import { Loader2, Shield, Server, Crown, ShieldCheck, Settings2, Users, Info, X, Hash } from "lucide-react";
 import Link from "next/link";
 
 interface Guild {
@@ -14,10 +14,12 @@ interface Guild {
     has_bot: boolean;
     is_premium: boolean;
     prefix: string;
+    member_count: number;
 }
 
 export default function ServersPage() {
     const [guilds, setGuilds] = useState<Guild[]>([]);
+    const [selectedGuild, setSelectedGuild] = useState<Guild | null>(null);
     const [loading, setLoading] = useState(true);
     const [user, setUser] = useState<any>(null);
     const [error, setError] = useState<string | null>(null);
@@ -246,23 +248,119 @@ export default function ServersPage() {
                                                 <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
                                                 Active
                                             </span>
+                                            <span className="text-xs text-gray-300 bg-white/5 px-2 py-0.5 rounded-full border border-white/10 flex items-center gap-1">
+                                                <Users size={10} />
+                                                {guild.member_count.toLocaleString()}
+                                            </span>
                                         </div>
                                     </div>
                                 </div>
 
                                 {/* Manage Button */}
-                                <Link
-                                    href={`/servers/${guild.id}`}
-                                    className="flex w-full bg-primary hover:bg-primary/80 text-black font-bold py-2.5 rounded-lg text-sm transition-all items-center justify-center gap-2 hover:shadow-[0_0_15px_var(--color-primary-glow)] mt-4"
-                                >
-                                    <Settings2 size={16} />
-                                    Manage
-                                </Link>
+                                <div className="flex gap-2 mt-4">
+                                    <Link
+                                        href={`/servers/${guild.id}`}
+                                        className="flex-1 flex bg-primary hover:bg-primary/80 text-black font-bold py-2.5 rounded-lg text-sm transition-all items-center justify-center gap-2 hover:shadow-[0_0_15px_var(--color-primary-glow)]"
+                                    >
+                                        <Settings2 size={16} />
+                                        Manage
+                                    </Link>
+                                    <button
+                                        onClick={() => setSelectedGuild(guild)}
+                                        className="flex-none flex bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white font-bold py-2.5 px-3 rounded-lg transition-all items-center justify-center border border-white/10"
+                                        title="Server Info"
+                                    >
+                                        <Info size={18} />
+                                    </button>
+                                </div>
                             </div>
                         ))}
                     </div>
                 )}
             </div>
+
+            {/* Server Info Modal */}
+            {selectedGuild && (
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-[#111] border border-white/10 rounded-2xl w-full max-w-md overflow-hidden relative animate-in zoom-in-95 duration-200 shadow-2xl">
+                        <div className="p-6 border-b border-white/10 bg-white/5 flex items-center justify-between">
+                            <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                                <Info className="text-primary" size={24} />
+                                Server Info
+                            </h2>
+                            <button
+                                onClick={() => setSelectedGuild(null)}
+                                className="text-gray-400 hover:text-white transition-colors bg-white/5 hover:bg-white/10 p-1.5 rounded-lg"
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
+                        <div className="p-6 space-y-4">
+                            <div className="flex items-center gap-4 mb-6 pb-6 border-b border-white/5">
+                                {selectedGuild.icon ? (
+                                    <img
+                                        src={`https://cdn.discordapp.com/icons/${selectedGuild.id}/${selectedGuild.icon}.png?size=1024`}
+                                        alt={selectedGuild.name}
+                                        className="w-20 h-20 rounded-xl border border-white/10 shadow-lg object-cover"
+                                    />
+                                ) : (
+                                    <div className="w-20 h-20 rounded-xl bg-primary/20 flex items-center justify-center text-3xl font-bold text-primary border border-primary/30 shadow-lg">
+                                        {selectedGuild.name.charAt(0)}
+                                    </div>
+                                )}
+                                <div>
+                                    <h3 className="text-lg font-bold text-white leading-tight">{selectedGuild.name}</h3>
+                                    <div className="flex items-center gap-1.5 text-gray-400 text-sm mt-1">
+                                        <Hash size={14} className="text-primary/70" />
+                                        {selectedGuild.id}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="bg-black/50 border border-white/5 rounded-xl p-3">
+                                    <div className="text-gray-500 text-xs font-bold mb-1 uppercase">Members</div>
+                                    <div className="text-white font-medium flex items-center gap-1.5">
+                                        <Users size={14} className="text-gray-400" />
+                                        {selectedGuild.member_count.toLocaleString()}
+                                    </div>
+                                </div>
+                                <div className="bg-black/50 border border-white/5 rounded-xl p-3">
+                                    <div className="text-gray-500 text-xs font-bold mb-1 uppercase">Your Role</div>
+                                    <div className="text-white font-medium flex items-center gap-1.5">
+                                        <ShieldCheck size={14} className={selectedGuild.role === 'Owner' ? "text-yellow-400" : "text-primary"} />
+                                        {selectedGuild.role}
+                                    </div>
+                                </div>
+                                <div className="bg-black/50 border border-white/5 rounded-xl p-3">
+                                    <div className="text-gray-500 text-xs font-bold mb-1 uppercase">Premium</div>
+                                    <div className="text-white font-medium flex items-center gap-1.5">
+                                        <Crown size={14} className={selectedGuild.is_premium ? "text-yellow-400" : "text-gray-500"} />
+                                        {selectedGuild.is_premium ? "Active" : "None"}
+                                    </div>
+                                </div>
+                                <div className="bg-black/50 border border-white/5 rounded-xl p-3">
+                                    <div className="text-gray-500 text-xs font-bold mb-1 uppercase">Prefix</div>
+                                    <div className="text-white font-medium flex items-center gap-1.5">
+                                        <code className="bg-white/10 px-1.5 py-0.5 rounded text-xs text-primary">{selectedGuild.prefix}</code>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="bg-black/50 border border-white/5 rounded-xl p-3 mt-4">
+                                <div className="text-gray-500 text-xs font-bold mb-1 uppercase">Bot Status</div>
+                                <div className="text-white font-medium flex items-center gap-1.5">
+                                    {selectedGuild.has_bot ? (
+                                        <><span className="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.6)]"></span> Connected</>
+                                    ) : (
+                                        <><span className="w-2 h-2 bg-red-500 rounded-full"></span> Disconnected</>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
