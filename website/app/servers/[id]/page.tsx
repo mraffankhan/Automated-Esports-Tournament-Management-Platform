@@ -85,16 +85,6 @@ interface UserPremium {
     premium_expire_time: string | null;
 }
 
-interface WelcomeConfig {
-    guild_id: string;
-    channel_id: string | null;
-    message: string;
-    enabled: boolean;
-    embed_enabled: boolean;
-    embed_color: number;
-    embed_title: string;
-}
-
 export default function ServerManagePage({ params }: { params: Promise<{ id: string }> }) {
     const { id: guildId } = use(params);
     const [tournaments, setTournaments] = useState<Tournament[]>([]);
@@ -109,8 +99,7 @@ export default function ServerManagePage({ params }: { params: Promise<{ id: str
 
     const [loading, setLoading] = useState(true);
     const [user, setUser] = useState<any>(null);
-    const [activeTab, setActiveTab] = useState<"tournaments" | "scrims" | "tickets" | "welcome" | "premium">("tournaments");
-    const [welcomeConfig, setWelcomeConfig] = useState<WelcomeConfig | null>(null);
+    const [activeTab, setActiveTab] = useState<"tournaments" | "scrims" | "tickets" | "premium">("tournaments");
     const [closingTicketId, setClosingTicketId] = useState<number | null>(null);
     const [ticketFilter, setTicketFilter] = useState<"all" | "open" | "closed">("all");
 
@@ -149,14 +138,13 @@ export default function ServerManagePage({ params }: { params: Promise<{ id: str
             setUser(session.user);
 
             // Fetch all data in parallel
-            const [tourneysRes, scrimsRes, channelsRes, rolesRes, premiumRes, ticketsRes, welcomeRes] = await Promise.all([
+            const [tourneysRes, scrimsRes, channelsRes, rolesRes, premiumRes, ticketsRes] = await Promise.all([
                 fetch(`/api/servers/${guildId}/tournaments`),
                 fetch(`/api/servers/${guildId}/scrims`),
                 fetch(`/api/servers/${guildId}/channels`),
                 fetch(`/api/servers/${guildId}/roles`),
                 fetch(`/api/servers/${guildId}/premium?userId=${session.user.id}`),
                 fetch(`/api/servers/${guildId}/tickets`),
-                fetch(`/api/servers/${guildId}/welcome`),
             ]);
 
             if (tourneysRes.ok && isMounted) setTournaments(await tourneysRes.json());
@@ -179,9 +167,6 @@ export default function ServerManagePage({ params }: { params: Promise<{ id: str
                 const data = await ticketsRes.json();
                 setTickets(data.tickets || []);
                 setTicketConfigs(data.configs || []);
-            }
-            if (welcomeRes.ok && isMounted) {
-                setWelcomeConfig(await welcomeRes.json());
             }
 
             if (isMounted) setLoading(false);
@@ -310,27 +295,6 @@ export default function ServerManagePage({ params }: { params: Promise<{ id: str
             } else {
                 const err = await res.json().catch(() => ({}));
                 showToast("error", err.error || "Failed to create scrim.");
-            }
-        } catch (err) {
-            showToast("error", "Network error. Please try again.");
-        }
-        setCreating(false);
-    };
-
-    const handleSaveWelcomeConfig = async () => {
-        if (!welcomeConfig) return;
-        setCreating(true);
-        try {
-            const res = await fetch(`/api/servers/${guildId}/welcome`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(welcomeConfig),
-            });
-
-            if (res.ok) {
-                showToast("success", "Welcome configuration saved successfully!");
-            } else {
-                showToast("error", "Failed to save welcome configuration.");
             }
         } catch (err) {
             showToast("error", "Network error. Please try again.");
@@ -851,179 +815,6 @@ export default function ServerManagePage({ params }: { params: Promise<{ id: str
                                 );
                             })()}
                         </>
-                    )}
-
-                    {activeTab === "welcome" && (
-                        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                            <div className="flex items-center justify-between mb-2">
-                                <h2 className="text-xl font-bold flex items-center gap-2">
-                                    <MessageSquare className="text-primary" size={22} />
-                                    Welcome Message Configuration
-                                </h2>
-                                <div className="flex items-center gap-3">
-                                    <span className={`text-sm font-medium ${welcomeConfig?.enabled ? "text-primary" : "text-gray-500"}`}>
-                                        {welcomeConfig?.enabled ? "Enabled" : "Disabled"}
-                                    </span>
-                                    <button
-                                        onClick={() => welcomeConfig && setWelcomeConfig({ ...welcomeConfig, enabled: !welcomeConfig.enabled })}
-                                        className={`w-12 h-6 rounded-full transition-all relative ${welcomeConfig?.enabled ? "bg-primary" : "bg-white/10"}`}
-                                    >
-                                        <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${welcomeConfig?.enabled ? "left-7" : "left-1"}`} />
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                {/* Configuration Form */}
-                                <div className="space-y-6">
-                                    <div className="bg-white/5 border border-white/10 rounded-2xl p-6 space-y-6">
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-300 mb-2">Welcome Channel</label>
-                                            <select
-                                                value={welcomeConfig?.channel_id || ""}
-                                                onChange={(e) => welcomeConfig && setWelcomeConfig({ ...welcomeConfig, channel_id: e.target.value || null })}
-                                                className="w-full px-4 py-2.5 bg-black border border-white/10 rounded-lg text-white focus:outline-none focus:border-primary/50"
-                                            >
-                                                <option value="">Select a channel...</option>
-                                                {channels.map((c) => (
-                                                    <option key={c.id} value={c.id}>#{c.name}</option>
-                                                ))}
-                                            </select>
-                                            <p className="text-xs text-gray-500 mt-2">The channel where the bot will send welcome messages.</p>
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-300 mb-2">Welcome Message</label>
-                                            <textarea
-                                                value={welcomeConfig?.message || ""}
-                                                onChange={(e) => welcomeConfig && setWelcomeConfig({ ...welcomeConfig, message: e.target.value })}
-                                                rows={4}
-                                                className="w-full px-4 py-2.5 bg-black border border-white/10 rounded-lg text-white focus:outline-none focus:border-primary/50 resize-none"
-                                                placeholder="Welcome {user} to {server}!"
-                                            />
-                                            <div className="flex flex-wrap gap-2 mt-2">
-                                                {["{user}", "{username}", "{server}", "{member_count}"].map((tag) => (
-                                                    <button
-                                                        key={tag}
-                                                        onClick={() => welcomeConfig && setWelcomeConfig({ ...welcomeConfig, message: welcomeConfig.message + tag })}
-                                                        className="text-[10px] px-2 py-0.5 rounded bg-white/5 border border-white/10 text-gray-400 hover:text-white hover:bg-white/10 transition-all font-mono"
-                                                    >
-                                                        {tag}
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        </div>
-
-                                        <div className="pt-4 border-t border-white/10">
-                                            <div className="flex items-center justify-between mb-4">
-                                                <div>
-                                                    <label className="block text-sm font-medium text-white">Embed Mode</label>
-                                                    <p className="text-xs text-gray-500">Send message inside a styled embed</p>
-                                                </div>
-                                                <button
-                                                    onClick={() => welcomeConfig && setWelcomeConfig({ ...welcomeConfig, embed_enabled: !welcomeConfig.embed_enabled })}
-                                                    className={`w-10 h-5 rounded-full transition-all relative ${welcomeConfig?.embed_enabled ? "bg-primary" : "bg-white/10"}`}
-                                                >
-                                                    <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all ${welcomeConfig?.embed_enabled ? "left-5.5" : "left-0.5"}`} />
-                                                </button>
-                                            </div>
-
-                                            {welcomeConfig?.embed_enabled && (
-                                                <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
-                                                    <div>
-                                                        <label className="block text-xs font-medium text-gray-400 mb-1.5">Embed Title</label>
-                                                        <input
-                                                            type="text"
-                                                            value={welcomeConfig.embed_title}
-                                                            onChange={(e) => setWelcomeConfig({ ...welcomeConfig, embed_title: e.target.value })}
-                                                            className="w-full px-3 py-2 bg-black border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-primary/50"
-                                                        />
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    <button
-                                        onClick={handleSaveWelcomeConfig}
-                                        disabled={creating || !welcomeConfig}
-                                        className="w-full py-3 bg-primary hover:bg-primary/80 disabled:bg-primary/40 text-black font-bold rounded-xl transition-all shadow-lg hover:shadow-primary/20 flex items-center justify-center gap-2"
-                                    >
-                                        {creating ? <Loader2 size={18} className="animate-spin" /> : <CheckCircle2 size={18} />}
-                                        Save Configuration
-                                    </button>
-                                </div>
-
-                                {/* Preview Card */}
-                                <div className="space-y-4">
-                                    <label className="block text-sm font-medium text-gray-300">Live Preview</label>
-                                    <div className="bg-white/5 border border-white/10 rounded-2xl p-8 flex flex-col items-center justify-center min-h-[300px] relative overflow-hidden">
-                                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(var(--color-primary-rgb),0.05),transparent)] pointer-events-none" />
-
-                                        {!welcomeConfig?.enabled && (
-                                            <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px] flex items-center justify-center z-20">
-                                                <div className="bg-black/80 border border-white/10 px-4 py-2 rounded-full text-xs text-gray-400 flex items-center gap-2">
-                                                    <Lock size={12} />
-                                                    Feature Disabled
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        <div className="w-full max-w-sm space-y-4 relative z-10">
-                                            {/* Discord Message Mockup */}
-                                            <div className="flex gap-4">
-                                                <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center shrink-0 border border-primary/20">
-                                                    <img src="/favicon.ico" alt="Bot" className="w-6 h-6" />
-                                                </div>
-                                                <div className="flex-1 space-y-1">
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="font-bold text-sm text-white">Argon</span>
-                                                        <span className="bg-primary/20 text-primary text-[10px] px-1 rounded font-bold">BOT</span>
-                                                        <span className="text-[10px] text-gray-500">Today at 12:00 PM</span>
-                                                    </div>
-
-                                                    {welcomeConfig?.embed_enabled ? (
-                                                        <div className="bg-[#2f3136] border-l-4 border-primary rounded p-3 mt-1 shadow-sm">
-                                                            <div className="font-bold text-sm text-white mb-1.5">{welcomeConfig.embed_title || "Welcome!"}</div>
-                                                            <div className="text-sm text-gray-300 whitespace-pre-wrap">
-                                                                {welcomeConfig.message
-                                                                    ? welcomeConfig.message
-                                                                        .replace(/{user}/g, "@User")
-                                                                        .replace(/{username}/g, "User#0000")
-                                                                        .replace(/{server}/g, "My Awesome Server")
-                                                                        .replace(/{member_count}/g, "1,234")
-                                                                    : "Welcome to the server!"}
-                                                            </div>
-                                                        </div>
-                                                    ) : (
-                                                        <div className="text-sm text-gray-300 whitespace-pre-wrap pt-0.5">
-                                                            {welcomeConfig?.message
-                                                                ? welcomeConfig.message
-                                                                    .replace(/{user}/g, "@User")
-                                                                    .replace(/{username}/g, "User#0000")
-                                                                    .replace(/{server}/g, "My Awesome Server")
-                                                                    .replace(/{member_count}/g, "1,234")
-                                                                : "Welcome to the server!"}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="p-4 bg-primary/5 border border-primary/20 rounded-xl">
-                                        <div className="flex gap-3">
-                                            <Sparkles className="text-primary shrink-0" size={18} />
-                                            <div>
-                                                <h4 className="text-sm font-bold text-white">Tip: Custom Variables</h4>
-                                                <p className="text-xs text-gray-400 mt-1 leading-relaxed">
-                                                    Use <code className="text-primary font-mono">{`{user}`}</code> to mention the joining member, or <code className="text-primary font-mono">{`{member_count}`}</code> to show the total member count.
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
                     )}
 
                     {activeTab === "premium" && (

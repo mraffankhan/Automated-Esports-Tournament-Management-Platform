@@ -54,6 +54,22 @@ Argon is built to handle the complexities of organizing competitive gaming event
     python main.py
     ```
 
+## 🌟 Credits
+
+### About the Project
+This project was not created in a day. It started as a small experiment and slowly became a complete platform with the help of open-source knowledge and community support. Every update and improvement represents the effort of developers who believed in building something useful for the esports community.
+
+### Origins
+The main inspiration behind this system comes from the original Quotient project. The developer of Quotient created a powerful base that helped many developers understand how such platforms work. Even today, his work continues to guide new projects.
+
+### Relation with Quotient
+Quotient was once a well-known esports bot used by many servers. After it stopped running, its open-source code allowed developers to learn and continue building similar systems. This project is built by studying that code and creating a new platform with additional features and improvements.
+
+### Developer Credits
+* **Original Developer (Quotient)** : [Rohit (Quotient's developer)](https://github.com/deadaf/portfolio)
+* **Open Source Contributors** : [Quotient Contributors](https://github.com/quotientbot/quotient/graphs/contributors)
+* **Current Platform Developer** : [Unknown](https://github.com/mraffankhan/Automated-Esports-Tournament-Management-Platform)
+
 ## 🤝 Contributing
 
 Contributions are welcome! Feel free to open issues or submit pull requests. Ensure your code follows the existing style guidelines.
