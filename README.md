@@ -58,6 +58,4 @@ Argon is built to handle the complexities of organizing competitive gaming event
 
 Contributions are welcome! Feel free to open issues or submit pull requests. Ensure your code follows the existing style guidelines.
 
-## 📄 License
 
-[Add your license information here]
