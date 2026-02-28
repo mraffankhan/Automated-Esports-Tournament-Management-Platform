@@ -40,14 +40,16 @@ class PremiumCog(Cog, name="Premium"):
             atext = "\n> Activated: No!"
 
         else:
-            atext = f"\n> Activated: Yes!\n> Ending: {discord_timestamp(user.premium_expire_time,'f')}"
+            time_display = discord_timestamp(user.premium_expire_time, 'f') if user.premium_expire_time else "Never (Lifetime Free)"
+            atext = f"\n> Activated: Yes!\n> Ending: {time_display}"
 
         if not guild.is_premium:
             btext = "\n> Activated: No!"
 
         else:
-            booster = guild.booster or await self.bot.fetch_user(guild.made_premium_by)
-            btext = f"\n> Activated: Yes!\n> Ending: {discord_timestamp(guild.premium_end_time,'f')}\n> Upgraded by: **{booster}**"
+            booster = guild.booster or await self.bot.fetch_user(guild.made_premium_by) if guild.made_premium_by else "System"
+            time_display = discord_timestamp(guild.premium_end_time, 'f') if guild.premium_end_time else "Never (Lifetime Free)"
+            btext = f"\n> Activated: Yes!\n> Ending: {time_display}\n> Upgraded by: **{booster}**"
 
         embed = self.bot.embed(ctx, title="Argon Premium", url=f"{self.bot.config.WEBSITE}")
         embed.add_field(name="User", value=atext, inline=False)
@@ -60,7 +62,7 @@ class PremiumCog(Cog, name="Premium"):
         """Checkout Argon Premium Plans."""
         _e = discord.Embed(
             color=self.bot.color,
-            description=f"[**Features of Argon Premium -**]({self.bot.config.SERVER_LINK})\n\n"
+            description=f"**Premium is entirely free. Custom Addons are Not Included.**\n\n[**Features of Argon Premium -**]({self.bot.config.SERVER_LINK})\n\n"
             f"{emote.check} Access to `Argon Premium` bot.\n"
             f"{emote.check} Unlimited Scrims.\n"
             f"{emote.check} Unlimited Tournaments.\n"

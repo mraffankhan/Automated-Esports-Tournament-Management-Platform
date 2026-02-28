@@ -15,19 +15,33 @@ from utils import truncate_string
 from ._base import ScrimsButton
 
 
+class ScrimNameModal(discord.ui.Modal, title="Scrim Name"):
+    name_input = discord.ui.TextInput(
+        label="Scrim Name",
+        placeholder="Enter the new name of this scrim...",
+        style=discord.TextStyle.short,
+        required=True,
+        max_length=30,
+    )
+
+    def __init__(self, view):
+        super().__init__()
+        self.scrim_view = view
+
+    async def on_submit(self, interaction: Interaction):
+        await interaction.response.defer()
+        self.scrim_view.record.name = self.name_input.value
+        await self.scrim_view.refresh_view()
+
+
 class SetName(ScrimsButton):
     def __init__(self, ctx: Context, letter: str):
         super().__init__(emoji=ri(letter))
         self.ctx = ctx
 
     async def callback(self, interaction: Interaction):
-        await interaction.response.defer()
-        m = await self.ctx.simple("Enter the new name of this scrim. (`Max 30 characters`)")
-        name = await inputs.string_input(self.ctx, delete_after=True)
-        await self.ctx.safe_delete(m)
-        self.view.record.name = truncate_string(name, 30)
-
-        await self.view.refresh_view()
+        # Do NOT defer here because we need to send a modal!
+        await interaction.response.send_modal(ScrimNameModal(self.view))
 
 
 class RegChannel(ScrimsButton):
@@ -129,7 +143,7 @@ class DuplicateTags(ScrimsButton):
 
         if not await self.ctx.is_premium_guild():
             return await self.ctx.error(
-                "[Argon Premium](https://argonbot.xyz/premium) is required to use this feature.", 4
+                "[Argon Premium](https://genzconnect.pro/premium) is required to use this feature.", 4
             )
 
         self.view.record.allow_duplicate_tags = not self.view.record.allow_duplicate_tags
@@ -183,7 +197,7 @@ class SetEmojis(ScrimsButton):
         await interaction.response.defer()
         if not await self.ctx.is_premium_guild():
             return await self.ctx.error(
-                "[Argon Premium](https://argonbot.xyz/premium) is required to use this feature.", 4
+                "[Argon Premium](https://genzconnect.pro/premium) is required to use this feature.", 4
             )
 
         e = discord.Embed(color=self.ctx.bot.color, title="Edit scrims emojis")

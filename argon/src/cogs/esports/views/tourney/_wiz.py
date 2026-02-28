@@ -18,14 +18,14 @@ class TourneySetupWizard(TourneyView):
         self.ctx = ctx
         self.record = None
 
-        self.add_item(RegChannel(ctx, "a"))
-        self.add_item(ConfirmChannel(ctx, "b"))
-        self.add_item(SetRole(ctx, "c"))
-        self.add_item(SetMentions(ctx, "d"))
-        self.add_item(SetGroupSize(ctx, "e"))
-        self.add_item(SetSlots(ctx, "f"))
-        self.add_item(SetEmojis(ctx, "g"))
-        self.add_item(SetTourneyname(ctx, "h"))
+        self.add_item(SetTourneyname(ctx, "a"))
+        self.add_item(RegChannel(ctx, "b"))
+        self.add_item(ConfirmChannel(ctx, "c"))
+        self.add_item(SetRole(ctx, "d"))
+        self.add_item(SetMentions(ctx, "e"))
+        self.add_item(SetGroupSize(ctx, "f"))
+        self.add_item(SetSlots(ctx, "g"))
+        self.add_item(SetEmojis(ctx, "h"))
         self.add_item(DiscardButton(ctx))
         self.add_item(SaveTourney(ctx))
 

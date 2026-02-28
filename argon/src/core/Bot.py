@@ -18,7 +18,6 @@ from discord import AllowedMentions, Intents
 from discord.ext import commands
 from lru import LRU
 from tortoise import Tortoise
-from redis.asyncio import Redis
 
 import config as cfg
 import constants as csts
@@ -140,7 +139,7 @@ class Argon(commands.AutoShardedBot):
 
     @property
     def prime_link(self):
-        return "https://argonbot.xyz/premium"
+        return "https://genzconnect.pro/premium"
 
     @property
     def color(self):
@@ -159,14 +158,6 @@ class Argon(commands.AutoShardedBot):
         await self.cache.fill_temp_cache()
 
         await self.cache.fill_temp_cache()
-
-        # Init Redis
-        self.redis = Redis.from_url(cfg.REDIS_URL, decode_responses=True)
-        try:
-            await self.redis.ping()
-            print("Connected to Redis")
-        except Exception as e:
-            print(f"Failed to connect to Redis: {e}")
 
         # Cache the connection pool for direct access
         self._db_pool = Tortoise.get_connection("default")._pool
@@ -274,9 +265,6 @@ class Argon(commands.AutoShardedBot):
 
         if hasattr(self, "session"):
             await self.session.close()
-        
-        if hasattr(self, "redis"):
-            await self.redis.close()
 
         await Tortoise.close_connections()
 
@@ -439,7 +427,7 @@ class Argon(commands.AutoShardedBot):
 
     @property
     def server(self) -> Optional[discord.Guild]:
-        return self.get_guild(746337818388987967)
+        return self.get_guild(self.config.SERVER_ID)
 
     @property
     def invite_url(self) -> str:

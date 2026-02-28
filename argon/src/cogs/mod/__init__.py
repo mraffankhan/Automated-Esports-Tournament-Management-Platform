@@ -746,6 +746,145 @@ class Mod(Cog):
                 await ctx.success(f"OK!")
 
 
+    @commands.hybrid_command()
+    @commands.has_permissions(kick_members=True)
+    async def warn(self, ctx: Context, member: discord.Member, *, reason: str):
+        """Warns a member in the server."""
+        if member.bot:
+            return await ctx.error("You cannot warn a bot.")
+        if member.top_role >= ctx.author.top_role and ctx.author != ctx.guild.owner:
+            return await ctx.error("You cannot warn someone with a higher or equal role to yours.")
+            
+        from models.misc.warnings import Warning
+        await Warning.create(
+            guild_id=ctx.guild.id,
+            user_id=member.id,
+            moderator_id=ctx.author.id,
+            reason=reason
+        )
+        
+        try:
+            embed = discord.Embed(
+                title=f"You have been warned in {ctx.guild.name}",
+                description=f"**Reason:** {reason}",
+                color=discord.Color.red()
+            )
+            await member.send(embed=embed)
+        except discord.Forbidden:
+            pass
+            
+        await ctx.success(f"Successfully warned {member.mention} for `{reason}`.")
+
+    @commands.hybrid_command(aliases=["warns"])
+    @commands.has_permissions(kick_members=True)
+    async def warnings(self, ctx: Context, member: discord.Member):
+        """View warnings for a specific member."""
+        from models.misc.warnings import Warning
+        warns = await Warning.filter(guild_id=ctx.guild.id, user_id=member.id).order_by("-created_at")
+        
+        if not warns:
+            return await ctx.simple(f"**{member}** has no warnings in this server.")
+            
+        embed = discord.Embed(title=f"Warnings for {member.display_name}", color=self.bot.color)
+        for warn in warns:
+            mod = ctx.guild.get_member(warn.moderator_id)
+            mod_name = mod.display_name if mod else f"Unknown ({warn.moderator_id})"
+            embed.add_field(
+                name=f"Warning ID: {warn.id} | <t:{int(warn.created_at.timestamp())}:D>",
+                value=f"**Reason:** {warn.reason}\n**Moderator:** {mod_name}",
+                inline=False
+            )
+            
+        await ctx.send(embed=embed)
+
+    @commands.hybrid_command()
+    @commands.has_permissions(kick_members=True)
+    async def delwarn(self, ctx: Context, member: discord.Member, warning_id: int):
+        """Delete a specific warning for a member."""
+        from models.misc.warnings import Warning
+        warn = await Warning.get_or_none(id=warning_id, guild_id=ctx.guild.id, user_id=member.id)
+        if not warn:
+            return await ctx.error(f"Warning ID `{warning_id}` not found for **{member}**.")
+            
+        await warn.delete()
+        await ctx.success(f"Successfully deleted warning `{warning_id}` for **{member}**.")
+
+    @commands.hybrid_command(aliases=["clearwarn", "unwarn"])
+    @commands.has_permissions(kick_members=True)
+    async def clearwarns(self, ctx: Context, member: discord.Member):
+        """Clear all warnings for a member."""
+        from models.misc.warnings import Warning
+        deleted_count = await Warning.filter(guild_id=ctx.guild.id, user_id=member.id).delete()
+        
+        if deleted_count == 0:
+            return await ctx.error(f"**{member}** has no warnings to clear.")
+            
+        await ctx.success(f"Successfully cleared `{deleted_count}` warnings for **{member}**.")
+
+    @commands.hybrid_command(aliases=["timeout"])
+    @commands.has_permissions(moderate_members=True)
+    @commands.bot_has_guild_permissions(moderate_members=True)
+    async def mute(self, ctx: Context, member: discord.Member, duration: FutureTime, *, reason: ActionReason = None):
+        """Mutes (timeouts) a member for a specified duration."""
+        if member.bot:
+            return await ctx.error("You cannot mute a bot.")
+            
+        if member.top_role >= ctx.author.top_role and ctx.author != ctx.guild.owner:
+            return await ctx.error("You cannot mute someone with a higher or equal role to yours.")
+            
+        if member.top_role >= ctx.me.top_role:
+            return await ctx.error("I cannot mute someone with a higher or equal role to mine.")
+
+        if member.is_timed_out():
+            return await ctx.error(f"**{member}** is already muted/timed out.")
+            
+        if not reason:
+            reason = f"Action done by {ctx.author} (ID: {ctx.author.id})"
+            
+        try:
+            await member.timeout(duration.dt, reason=reason)
+            await ctx.success(f"Successfully muted **{member}** for {human_timedelta(duration.dt, accuracy=None)}.")
+            try:
+                embed = discord.Embed(
+                    title=f"You have been muted in {ctx.guild.name}",
+                    description=f"**Duration:** {human_timedelta(duration.dt, accuracy=None)}\n**Reason:** {reason}",
+                    color=discord.Color.red()
+                )
+                await member.send(embed=embed)
+            except discord.Forbidden:
+                pass
+        except discord.HTTPException as e:
+            await ctx.error(f"Failed to mute member: {e.text}")
+
+    @commands.hybrid_command(aliases=["untimeout"])
+    @commands.has_permissions(moderate_members=True)
+    @commands.bot_has_guild_permissions(moderate_members=True)
+    async def unmute(self, ctx: Context, member: discord.Member, *, reason: ActionReason = None):
+        """Unmutes (removes timeout from) a member."""
+        if not member.is_timed_out():
+            return await ctx.error(f"**{member}** is not currently muted.")
+            
+        if member.top_role >= ctx.author.top_role and ctx.author != ctx.guild.owner:
+            return await ctx.error("You cannot unmute someone with a higher or equal role to yours.")
+            
+        if not reason:
+            reason = f"Action done by {ctx.author} (ID: {ctx.author.id})"
+            
+        try:
+            await member.timeout(None, reason=reason)
+            await ctx.success(f"Successfully unmuted **{member}**.")
+            try:
+                embed = discord.Embed(
+                    title=f"You have been unmuted in {ctx.guild.name}",
+                    description=f"**Reason:** {reason}",
+                    color=discord.Color.green()
+                )
+                await member.send(embed=embed)
+            except discord.Forbidden:
+                pass
+        except discord.HTTPException as e:
+            await ctx.error(f"Failed to unmute member: {e.text}")
+
 async def setup(bot: Argon) -> None:
     await bot.add_cog(Mod(bot))
     await bot.add_cog(LockEvents(bot))

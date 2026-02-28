@@ -47,31 +47,87 @@ class MainEvents(Cog, name="Main Events"):
                 if inviter.bot:
                     return
 
-                should_invite = True
+                in_support_server = False
                 support_server = self.bot.get_guild(config.SERVER_ID)
                 if support_server:
                     member = support_server.get_member(inviter.id)
                     if member:
-                        should_invite = False
+                        in_support_server = True
                 
-                if should_invite:
+                if in_support_server:
+                    # User is in support server, so they get free premium!
+                    g, _ = await Guild.get_or_create(guild_id=guild.id)
+                    g.is_premium = True
+                    g.made_premium_by = inviter.id
+                    await g.save()
+                    with suppress(discord.Forbidden):
+                        await inviter.send(f"🎉 Thank you for adding me to **{guild.name}**!\nSince you are a member of **RAVONIX HQ**, your server has been automatically upgraded to **ARGON Premium** for free!")
+
+                else:
+                    # User is not in support server, ask them to join for free premium
                     with suppress(discord.Forbidden):
                         embed = discord.Embed(
-                            title=f"Thanks for adding me to {guild.name}!",
+                            title=f"Welcome to Argon!",
                             description=(
-                                f"Hey {inviter.mention}, I noticed you aren't in my support server yet.\n"
-                                "Join us to get updates, support, and meet the community!"
+                                f"Hey {inviter.mention}, thanks for adding me to {guild.name}!\n\n"
+                                "Need Premium for free? Just join my support server and your server will be automatically upgraded!"
                             ),
                             color=config.COLOR
                         )
                         embed.set_footer(text=config.FOOTER)
                         
                         view = discord.ui.View()
-                        view.add_item(discord.ui.Button(label="Accept Invite", url=config.SERVER_LINK, style=discord.ButtonStyle.link))
+                        view.add_item(discord.ui.Button(label="Join RAVONIX HQ", url=config.SERVER_LINK, style=discord.ButtonStyle.link))
                         
                         await inviter.send(embed=embed, view=view)
+                break
                 break
         except (discord.Forbidden, discord.HTTPException):
             pass
 
+    @Cog.listener()
+    async def on_member_join(self, member: discord.Member) -> None:
+        # Check if they joined the support server
+        if member.guild.id != config.SERVER_ID:
+            return
+            
+        # Get all guilds the bot is in where this member is the owner
+        owned_guilds = [g for g in self.bot.guilds if g.owner_id == member.id]
+        if not owned_guilds:
+            return
+            
+        upgraded = 0
+        for guild in owned_guilds:
+            g_db, _ = await Guild.get_or_create(guild_id=guild.id)
+            if not g_db.is_premium:
+                g_db.is_premium = True
+                g_db.made_premium_by = member.id
+                await g_db.save()
+                upgraded += 1
+                
+        if upgraded > 0:
+            with suppress(discord.Forbidden):
+                await member.send(f"🎉 **Welcome to RAVONIX HQ!**\nSince you joined the support server, **{upgraded}** of your servers have been automatically upgraded to **ARGON Premium** for free!")
+
+    @Cog.listener()
+    async def on_member_remove(self, member: discord.Member) -> None:
+        # Check if they left the support server
+        if member.guild.id != config.SERVER_ID:
+            return
+            
+        # Revoke premium from any guild they made premium
+        guilds_to_downgrade = await Guild.filter(made_premium_by=member.id, is_premium=True)
+        if not guilds_to_downgrade:
+            return
+            
+        downgraded = 0
+        for g_db in guilds_to_downgrade:
+            g_db.is_premium = False
+            g_db.made_premium_by = None
+            await g_db.save()
+            downgraded += 1
+            
+        if downgraded > 0:
+            with suppress(discord.Forbidden):
+                await member.send(f"⚠️ **You left RAVONIX HQ!**\nBecause you left the support server, **{downgraded}** of your servers have lost their free ARGON Premium perks.\n\nRejoin to instantly get Premium back! {config.SERVER_LINK}")
 

@@ -297,7 +297,7 @@ class TourneyManager(EsportsBaseView):
         #     return await self.ctx.error(
         #         "You need Argon Premium to download Ms Excel file containing all the "
         #         f"registration data of your tourneys.\n\n"
-        #         "Buy Premium for just ₹29 here: https://argonbot.xyz/premium",
+        #         "Buy Premium for just ₹29 here: https://genzconnect.pro/premium",
         #         6,
         #     )
 

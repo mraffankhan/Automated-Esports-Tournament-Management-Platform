@@ -13,4 +13,5 @@ from .User import *
 from .Votes import *
 from .noprefix import *
 from .ticket import *
-from .Welcome import *
+from .bug import *
+from .warnings import *

@@ -50,7 +50,7 @@ class VotesCog(Cog):
                 color=self.bot.color,
                 description=f"{constants.random_greeting()}, You asked me to remind you to vote.",
                 title="Vote Expired!",
-                url="https://platform.genzconnect.pro/vote",
+                url="https://genzconnect.pro/vote",
             )
             try:
                 await member.send(embed=embed)

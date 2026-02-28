@@ -3,7 +3,7 @@ from typing import List
 import discord
 
 import config
-from models import PremiumPlan, PremiumTxn
+from models import Guild, PremiumPlan, PremiumTxn
 from utils import emote
 
 
@@ -21,11 +21,20 @@ class PlanSelector(discord.ui.Select):
 
 
 class PremiumPurchaseBtn(discord.ui.Button):
-    def __init__(self, label="Get Argon Premium", emoji=emote.diamond, style=discord.ButtonStyle.link, url=config.SERVER_LINK):
-        super().__init__(style=style, label=label, emoji=emoji, url=url)
+    def __init__(self, label="Get ARGON Pro", emoji=emote.diamond, style=discord.ButtonStyle.blurple):
+        super().__init__(style=style, label=label, emoji=emoji, custom_id="premium:purchase")
 
     async def callback(self, interaction: discord.Interaction):
-        pass
+        # Dynamically fetch if the server is premium to display the prompt required
+        guild_data = await Guild.get_or_none(guild_id=interaction.guild_id)
+        if guild_data and guild_data.is_premium:
+            return await interaction.response.send_message(
+                f"Server **{interaction.guild.name}** already has **ARGON PREMIUM** activated!", 
+                ephemeral=True
+            )
+        
+        # Fallback for some reason if it isn't
+        await interaction.response.send_message("Please visit our support server to upgrade manually.", ephemeral=True)
 
 
 class PremiumView(discord.ui.View):
@@ -50,5 +59,6 @@ class PremiumView(discord.ui.View):
             f"{emote.check} Smart SSverification.\n"
             f"{emote.check} Cancel-Claim Panel.\n"
             f"{emote.check} Premium Role + more...\n"
+            f"<:argon_book:1477253615046623356> Premium is entirely free.\n"
         )
         return _e

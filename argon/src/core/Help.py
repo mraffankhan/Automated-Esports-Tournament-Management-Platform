@@ -44,7 +44,7 @@ class HelpSelect(discord.ui.Select):
         ]
         
         # Filter and sort cogs
-        hidden = ("HelpCog", "Dev", "NoPrefixCmd", "ArgonAlerts", "Jishaku")
+        hidden = ("HelpCog", "Dev", "NoPrefixCmd", "ArgonAlerts", "Jishaku", "Bug Reporting")
         sorted_cogs = sorted(mapping.items(), key=lambda x: x[0].qualified_name if x[0] else "")
         
         for cog, cmds in sorted_cogs:
@@ -141,7 +141,7 @@ class HelpView(discord.ui.View):
             color=ctx.guild_color
         )
         
-        hidden = ("HelpCog", "Dev", "NoPrefixCmd", "ArgonAlerts", "Jishaku")
+        hidden = ("HelpCog", "Dev", "NoPrefixCmd", "ArgonAlerts", "Jishaku", "Bug Reporting")
         sorted_cogs = sorted(self.mapping.items(), key=lambda x: x[0].qualified_name if x[0] else "")
         
         for cog, cmds in sorted_cogs:
@@ -174,7 +174,7 @@ class HelpView(discord.ui.View):
         
         # Modules List
         embed.description += f"{emote.arrow} **__Modules__**\n"
-        hidden = ("HelpCog", "Dev", "NoPrefixCmd", "ArgonAlerts", "Jishaku")
+        hidden = ("HelpCog", "Dev", "NoPrefixCmd", "ArgonAlerts", "Jishaku", "Bug Reporting")
         sorted_cogs = sorted(self.mapping.items(), key=lambda x: x[0].qualified_name if x[0] else "")
         
         module_list = []

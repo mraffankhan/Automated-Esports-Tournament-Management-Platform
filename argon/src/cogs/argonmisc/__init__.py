@@ -13,7 +13,7 @@ from collections import Counter
 from datetime import datetime, timedelta, timezone
 
 import discord
-import pkg_resources
+import importlib.metadata
 import psutil
 import psutil
 try:
@@ -115,6 +115,36 @@ class ArgonMisc(Cog, name="ArgonMisc"):
 
         return channel
 
+    @commands.hybrid_command(name="credit", aliases=("credits",))
+    async def credit(self, ctx: Context):
+        """Displays the credits and origins of the project."""
+        embed = self.bot.embed(ctx, title="🌟 Project Credits")
+        
+        embed.add_field(
+            name="About the Project",
+            value="This project was not created in a day. It started as a small experiment and slowly became a complete platform with the help of open-source knowledge and community support. Every update and improvement represents the effort of developers who believed in building something useful for the esports community.",
+            inline=False
+        )
+        
+        embed.add_field(
+            name="Origins",
+            value="The main inspiration behind this system comes from the original Quotient project. The developer of Quotient created a powerful base that helped many developers understand how such platforms work. Even today, his work continues to guide new projects.",
+            inline=False
+        )
+        
+        embed.add_field(
+            name="Relation with Quotient",
+            value="Quotient was once a well-known esports bot used by many servers. After it stopped running, its open-source code allowed developers to learn and continue building similar systems. This project is built by studying that code and creating a new platform with additional features and improvements.",
+            inline=False
+        )
+        
+        embed.add_field(
+            name="Developer Credits",
+            value="**Original Developer (Quotient)** : [Rohit](https://github.com/deadaf/portfolio)\n**Open Source Contributors** : [Quotient Contributors](https://github.com/quotientbot/quotient/graphs/contributors)\n**Current Platform Developer** : [Unknown](https://github.com/mraffankhan/Automated-Esports-Tournament-Management-Platform)",
+            inline=False
+        )
+        await ctx.send(embed=embed)
+
     @commands.command(name="setup")
     @commands.has_permissions(manage_guild=True)
     @commands.bot_has_guild_permissions(manage_channels=True, manage_webhooks=True)
@@ -147,7 +177,7 @@ class ArgonMisc(Cog, name="ArgonMisc"):
 
         # [`hash`](url) message (offset)
         offset = format_relative(commit_time.astimezone(timezone.utc))
-        return f"[`{short_sha2}`](https://github.com/argonbot/Argon-Bot/commit/{commit.hex}) {truncate_string(short,40)} ({offset})"
+        return f"[`{short_sha2}`](https://github.com/mraffankhan/Automated-Esports-Tournament-Management-Platform/commit/main/{commit.hex}) {truncate_string(short,40)} ({offset})"
 
     def get_last_commits(self, count=3):
         if pygit2 is None:
@@ -156,9 +186,9 @@ class ArgonMisc(Cog, name="ArgonMisc"):
         commits = list(itertools.islice(repo.walk(repo.head.target, pygit2.GIT_SORT_TOPOLOGICAL), count))
         return "\n".join(self.format_commit(c) for c in commits)
 
-    @commands.command(aliases=("stats",))
+    @commands.command(aliases=("stats", "about"))
     @commands.cooldown(1, 10, commands.BucketType.guild)
-    async def about(self, ctx: Context):
+    async def info(self, ctx: Context):
         """Statistics of Argon."""
         (
             db_latency,
@@ -173,8 +203,8 @@ class ArgonMisc(Cog, name="ArgonMisc"):
         )
         user_invokes = user_invokes or 0
         server_invokes = server_invokes or 0
-
-        version = pkg_resources.get_distribution("discord.py").version
+        total_users = sum(1 for _ in self.bot.get_all_members())
+        version = importlib.metadata.version("discord.py")
         revision = self.get_last_commits()
 
         total_memory = psutil.virtual_memory().total >> 20
@@ -226,6 +256,46 @@ class ArgonMisc(Cog, name="ArgonMisc"):
     async def ping(self, ctx: Context):
         """Check how the bot is doing"""
         await ctx.send(f"Bot: `{round(self.bot.latency*1000, 2)} ms`, Database: `{await self.bot.db_latency}`")
+
+    @commands.hybrid_command(aliases=["repo", "github", "credit"])
+    async def source(self, ctx: Context):
+        """Information about Argon's source code and origins."""
+        embed = discord.Embed(
+            color=self.bot.color,
+            description=(
+                "This ARGON bot is a Fork of an Existing Bot **[(Quotient by Rohit Bhaiya)](https://github.com/deadaf)**, for more info use `contributors`.\n\n"
+                "Here's an Enhanced & fixed repo of **[Quotient Legacy](https://github.com/CycloneAddons/Quotient-Legacy)** with **[Video tutorial](https://youtu.be/7E2hB0sX0hg)**."
+            )
+        )
+        await ctx.send(embed=embed)
+
+    @commands.hybrid_command(aliases=["tos", "privacy", "legal"])
+    async def docs(self, ctx: Context):
+        """View Argon's legal documents, terms, and licenses."""
+        embed = discord.Embed(
+            color=self.bot.color,
+            description="**By using ARGON, you agree to following documents:**\n\n"
+                        " \u2022 [Terms of Services](https://genzconnect.pro/legal/terms)\n"
+                        " \u2022 [Privacy Policy](https://genzconnect.pro/legal/privacy)\n"
+                        " \u2022 [Licence](https://github.com/mraffankhan/Automated-Esports-Tournament-Management-Platform/blob/main/LICENSE)\n"
+                        " \u2022 [Github](https://github.com/mraffankhan/Automated-Esports-Tournament-Management-Platform)\n\n"
+                        "For More info, help or queries regarding your data, visit our **[Support Server](https://discord.gg/ZT4KXFK3RD)**"
+        )
+        await ctx.send(embed=embed)
+
+    @commands.hybrid_command(aliases=["panel", "web", "site"])
+    async def dashboard(self, ctx: Context):
+        """Access the Argon web dashboard."""
+        embed = discord.Embed(
+            title="ARGON Dashboard",
+            color=self.bot.color,
+            description=(
+                "Access the web dashboard to manage your server's scrims and tournaments with ease.\n\n"
+                "**Dashboard Link:**\n"
+                "https://genzconnect.pro/servers"
+            )
+        )
+        await ctx.send(embed=embed)
 
     @commands.command(hidden=True)
     async def voteremind(self, ctx: Context):

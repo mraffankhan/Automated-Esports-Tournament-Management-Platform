@@ -38,7 +38,7 @@ class ScrimSetup(ScrimsView):
         if not self.record:
             self.record = Scrim(guild_id=self.ctx.guild.id, host_id=self.ctx.author.id)
 
-        d_link = "https://argonbot.xyz/dashboard/{0}/scrims/create".format(self.ctx.guild.id)
+        d_link = "https://genzconnect.pro/dashboard/{0}/scrims/create".format(self.ctx.guild.id)
 
         _e = discord.Embed(color=self.ctx.bot.cache.guild_color(self.ctx.guild.id), title="Enter details & Press Save", url=self.bot.config.SERVER_LINK)
         _e.description = f"[`Scrim Creation is a piece of cake through dashboard, Click Me`]({d_link})\n\n"
