@@ -24,7 +24,7 @@ class Tourney(BaseDbModel):
         table = "tm.tourney"
 
     id = fields.BigIntField(pk=True, index=True)
-    guild_id = fields.BigIntField()
+    guild_id = fields.BigIntField(index=True)
     name = fields.CharField(max_length=30, default="Argon-Tourney")
     registration_channel_id = fields.BigIntField(index=True)
     confirm_channel_id = fields.BigIntField()
@@ -383,10 +383,14 @@ class Tourney(BaseDbModel):
         return True, True
 
     async def ban_user(self, user: Union[discord.Member, discord.User]):
-        await Tourney.filter(pk=self.id).update(banned_users=ArrayAppend("banned_users", user.id))
+        if user.id not in self.banned_users:
+            self.banned_users.append(user.id)
+            await self.save(update_fields=["banned_users"])
 
     async def unban_user(self, user: Union[discord.Member, discord.User]):
-        await Tourney.filter(pk=self.id).update(banned_users=ArrayRemove("banned_users", user.id))
+        if user.id in self.banned_users:
+            self.banned_users.remove(user.id)
+            await self.save(update_fields=["banned_users"])
 
     async def remove_slot(self, slot: "TMSlot"):
         if slot.confirm_jump_url:
@@ -434,15 +438,16 @@ class Tourney(BaseDbModel):
             return True
 
     async def check_fake_tags(self, message: discord.Message):
+        import json
+        mentions_json = json.dumps([i.id for i in message.mentions])
         query = """
         SELECT *
-            FROM PUBLIC."tm.tourney_tm.register" AS ASSIGNED_SLOT
-            INNER JOIN PUBLIC."tm.register" AS SLOTS ON SLOTS.ID = ASSIGNED_SLOT.TMSLOT_ID
-        WHERE ASSIGNED_SLOT."tm.tourney_id" = $1
-        AND $2 && SLOTS.MEMBERS;
-
+            FROM `tm.tourney_tm.register` AS ASSIGNED_SLOT
+            INNER JOIN `tm.register` AS SLOTS ON SLOTS.ID = ASSIGNED_SLOT.TMSLOT_ID
+        WHERE ASSIGNED_SLOT.`tm.tourney_id` = %s
+        AND JSON_OVERLAPS(%s, SLOTS.MEMBERS);
         """
-        return await self.bot.db.fetch(query, self.id, [i.id for i in message.mentions])
+        return await self.bot.db.fetch(query, self.id, mentions_json)
 
 
 class TMSlot(BaseDbModel):
@@ -452,7 +457,7 @@ class TMSlot(BaseDbModel):
     id = fields.BigIntField(pk=True)
     num = fields.IntField()
     team_name = fields.TextField()
-    leader_id = fields.BigIntField()
+    leader_id = fields.BigIntField(index=True)
     message_id = fields.BigIntField(null=True)
     members = ArrayField(fields.BigIntField(), default=list)
     confirm_jump_url = fields.CharField(max_length=300, null=True)
@@ -488,8 +493,8 @@ class TGroupList(BaseDbModel):
         table = "tourney_groups"
 
     message_id = fields.BigIntField(pk=True)
-    tourney_id = fields.IntField()
-    channel_id = fields.BigIntField()
+    tourney_id = fields.IntField(index=True)
+    channel_id = fields.BigIntField(index=True)
     group_number = fields.SmallIntField()
     refresh_at = fields.DatetimeField(auto_now=True)
 
