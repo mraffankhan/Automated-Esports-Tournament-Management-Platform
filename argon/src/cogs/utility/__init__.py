@@ -135,13 +135,14 @@ class Utility(Cog, name="utility"):
             text = f"Added {role.mention} to human autoroles."
 
         else:
-            func = (ArrayAppend, ArrayRemove)[role.id in record.humans]
-            await Autorole.filter(guild_id=ctx.guild.id).update(humans=func("humans", role.id))
-            text = (
-                f"Added {role.mention} to human autoroles."
-                if func == ArrayAppend
-                else f"Removed {role.mention} from human autoroles."
-            )
+            if role.id in record.humans:
+                record.humans.remove(role.id)
+                action = "Removed"
+            else:
+                record.humans.append(role.id)
+                action = "Added"
+            await record.save(update_fields=["humans"])
+            text = f"{action} {role.mention} to human autoroles."
 
         await ctx.success(text)
 
@@ -158,13 +159,14 @@ class Utility(Cog, name="utility"):
             text = f"Added {role.mention} to bot autoroles."
 
         else:
-            func = (ArrayAppend, ArrayRemove)[role.id in record.bots]
-            await Autorole.filter(guild_id=ctx.guild.id).update(bots=func("bots", role.id))
-            text = (
-                f"Added {role.mention} to bot autoroles."
-                if func == ArrayAppend
-                else f"Removed {role.mention} from bot autoroles."
-            )
+            if role.id in record.bots:
+                record.bots.remove(role.id)
+                action = "Removed"
+            else:
+                record.bots.append(role.id)
+                action = "Added"
+            await record.save(update_fields=["bots"])
+            text = f"{action} {role.mention} to bot autoroles."
 
         await ctx.success(text)
 
@@ -649,6 +651,140 @@ class Utility(Cog, name="utility"):
         self.bot.cache.autopurge_channels.discard(channel.id)
         await AutoPurge.filter(channel_id=channel.id, guild_id=ctx.guild.id).delete()
         await ctx.success(f"**{channel}** removed from autopurge channels.")
+
+    @commands.hybrid_command(name="serverinfo", aliases=["si", "server"])
+    @commands.guild_only()
+    async def serverinfo(self, ctx: Context):
+        """Get detailed information about the current server."""
+        guild = ctx.guild
+        
+        # Determine features
+        features = []
+        for feature in guild.features:
+            features.append(f"✅ : {feature.replace('_', ' ').title()}")
+        if not features:
+            features_text = "None"
+        else:
+            features_text = "\n".join(features)
+            
+        # Channel counts
+        categories = len(guild.categories)
+        text_channels = len(guild.text_channels)
+        voice_channels = len(guild.voice_channels)
+        threads = len(guild.threads)
+        
+        locked_text = sum(1 for c in guild.text_channels if c.overwrites_for(guild.default_role).send_messages is False)
+        hidden_text = sum(1 for c in guild.text_channels if c.overwrites_for(guild.default_role).view_channel is False)
+        
+        locked_voice = sum(1 for c in guild.voice_channels if c.overwrites_for(guild.default_role).connect is False)
+        hidden_voice = sum(1 for c in guild.voice_channels if c.overwrites_for(guild.default_role).view_channel is False)
+
+        bots = sum(1 for m in guild.members if m.bot)
+        humans = guild.member_count - bots
+        
+        embed = self.bot.embed(ctx, title=f"{guild.name}'s Information")
+        if guild.icon:
+            embed.set_thumbnail(url=guild.icon.url)
+            
+        owner = guild.owner
+        if not owner and guild.owner_id:
+            try:
+                owner = await self.bot.fetch_user(guild.owner_id)
+            except discord.HTTPException:
+                pass
+                
+        owner_text = f"{owner.mention} (@{owner.name})" if owner else "Unknown"
+        
+        # About
+        embed.add_field(
+            name="About",
+            value=f"**Name :** {guild.name}\n"
+            f"**ID :** {guild.id}\n"
+            f"**Owner :** 👑 : {owner_text}\n"
+            f"**Created At :** {guild.created_at.strftime('%A, %B %d, %Y %I:%M %p')}\n"
+            f"**Members :** {guild.member_count}",
+            inline=False
+        )
+        
+        # Description
+        embed.add_field(
+            name="Description",
+            value=guild.description or "None",
+            inline=False
+        )
+        
+        # Features
+        if features_text != "None":
+            embed.add_field(
+                name="Features",
+                value=features_text,
+                inline=False
+            )
+            
+        # Extras
+        embed.add_field(
+            name="Extras",
+            value=f"**Verification Level :** {str(guild.verification_level).title()}\n"
+            f"**AFK Channel :** {guild.afk_channel.name if guild.afk_channel else 'None'}\n"
+            f"**AFK Timeout :** {guild.afk_timeout / 60.0}\n"
+            f"**System Channel :** {guild.system_channel.name if guild.system_channel else 'None'}\n"
+            f"**NSFW level :** {str(guild.nsfw_level).replace('NSFWLevel.', '').title()}\n"
+            f"**Explicit Content Filter :** {str(guild.explicit_content_filter).title()}\n"
+            f"**Max Talk Bitrate :** {int(guild.bitrate_limit / 1000)} kbps",
+            inline=False
+        )
+        
+        # Members
+        embed.add_field(
+            name="Members",
+            value=f"**Members :** {guild.member_count}\n"
+            f"**Humans :** {humans}\n"
+            f"**Bots :** {bots}",
+            inline=True
+        )
+        
+        # Channels
+        embed.add_field(
+            name="Channels",
+            value=f"**Categories :** {categories}\n"
+            f"**Text Channels :** {text_channels} (Locked: {locked_text}, Hidden: {hidden_text})\n"
+            f"**Voice Channels :** {voice_channels} (Locked: {locked_voice}, Hidden: {hidden_voice})\n"
+            f"**Threads :** {threads}",
+            inline=True
+        )
+        
+        # Emoji Info
+        regular_emojis = len([e for e in guild.emojis if not e.animated])
+        embed.add_field(
+            name="Emoji Info",
+            value=f"**Regular Emojis :** {regular_emojis}\n"
+            f"**Stickers :** {len(guild.stickers)}\n"
+            f"**Total Emoji/Stickers :** {len(guild.emojis) + len(guild.stickers)}",
+            inline=True
+        )
+        
+        # Boost Status
+        embed.add_field(
+            name="Boost Status",
+            value=f"**Level :** {guild.premium_tier} [<:02boost:1255554605992017990> {guild.premium_subscription_count} Boosts]\n"
+            f"**Booster Role :** {guild.premium_subscriber_role.mention if guild.premium_subscriber_role else 'None'}",
+            inline=False
+        )
+        
+        # Server Roles
+        roles = [role.mention for role in reversed(guild.roles) if role.name != "@everyone"]
+        roles_text = " • ".join(roles) if roles else "None"
+        if len(roles_text) > 1024:
+            roles_text = roles_text[:1020] + "..."
+            
+        embed.add_field(
+            name=f"Server Roles [ {len(roles)} ]",
+            value=roles_text,
+            inline=False
+        )
+        
+        embed.set_author(name=f"Requested By {ctx.author}", icon_url=ctx.author.display_avatar.url)
+        await ctx.send(embed=embed)
 
 
 async def setup(bot: Argon) -> None:
