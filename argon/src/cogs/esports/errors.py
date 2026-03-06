@@ -359,7 +359,8 @@ class SMError(Cog):
 
         self.bot.loop.create_task(message.author.remove_roles(scrim.role))
         await AssignedSlot.filter(id=slot.id).delete()
-        await Scrim.filter(id=scrim.id).update(available_slots=ArrayAppend("available_slots", slot.num))
+        scrim.available_slots.append(slot.num)
+        await scrim.save(update_fields=["available_slots"])
         if scrim.logschan is not None:
             embed = discord.Embed(color=discord.Color.red())
             embed.description = f"Slot of {message.author.mention} was deleted from Scrim: {scrim.id}, because their registration was deleted from {message.channel.mention}"
