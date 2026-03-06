@@ -14,3 +14,13 @@ services:
 
     volumes:
       - ./logs:/app/logs # Mount a volume for logs
+
+  argon-private-bot:
+    build:
+      context: .
+    restart: always
+    environment:
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./logs:/app/logs
+    entrypoint: ["python", "src/private_bot.py"]
