@@ -25,7 +25,7 @@ class Scrim(BaseDbModel):
         table = "sm.scrims"
 
     id = fields.BigIntField(pk=True, index=True)
-    guild_id = fields.BigIntField()
+    guild_id = fields.BigIntField(index=True)
     name = fields.TextField(default="Argon-Scrims")
     registration_channel_id = fields.BigIntField(index=True)
     slotlist_channel_id = fields.BigIntField()
@@ -631,15 +631,16 @@ class Scrim(BaseDbModel):
         return await Scrim.filter(guild_id=guild_id).count()
 
     async def check_fake_tags(self, message: discord.Message):
+        import json
+        mentions_json = json.dumps([i.id for i in message.mentions])
         query = """
         SELECT *
-            FROM PUBLIC."sm.scrims_sm.assigned_slots" AS ASSIGNED_SLOT
-            INNER JOIN PUBLIC."sm.assigned_slots" AS SLOTS ON SLOTS.ID = ASSIGNED_SLOT.ASSIGNEDSLOT_ID
-        WHERE ASSIGNED_SLOT."sm.scrims_id" = $1
-        AND $2 && SLOTS.MEMBERS;
-
+            FROM `sm.scrims_sm.assigned_slots` AS ASSIGNED_SLOT
+            INNER JOIN `sm.assigned_slots` AS SLOTS ON SLOTS.ID = ASSIGNED_SLOT.ASSIGNEDSLOT_ID
+        WHERE ASSIGNED_SLOT.`sm.scrims_id` = %s
+        AND JSON_OVERLAPS(%s, SLOTS.MEMBERS);
         """
-        return await self.bot.db.fetch(query, self.id, [i.id for i in message.mentions])
+        return await self.bot.db.fetch(query, self.id, mentions_json)
 
 
 class BaseSlot(models.Model):
@@ -648,7 +649,7 @@ class BaseSlot(models.Model):
 
     id = fields.IntField(pk=True)
     num = fields.IntField(null=True)  # this will never be null but there are already records in the table so
-    user_id = fields.BigIntField(null=True)
+    user_id = fields.BigIntField(null=True, index=True)
     team_name = fields.TextField(null=True)
     # drop_location = fields.CharField(max_length=30, null=True)
     members = ArrayField(fields.BigIntField(), default=list)
@@ -690,8 +691,8 @@ class BanLog(BaseDbModel):
         table = "esports_bans"
 
     id = fields.IntField(pk=True)
-    guild_id = fields.BigIntField()
-    channel_id = fields.BigIntField()
+    guild_id = fields.BigIntField(index=True)
+    channel_id = fields.BigIntField(index=True)
 
     @property
     def channel(self):
@@ -762,5 +763,5 @@ class ScrimsSlotReminder(BaseDbModel):
         table = "scrims_slot_reminders"
 
     id = fields.IntField(pk=True)
-    user_id = fields.BigIntField()
+    user_id = fields.BigIntField(index=True)
     created_at = fields.DatetimeField(auto_now=True)
