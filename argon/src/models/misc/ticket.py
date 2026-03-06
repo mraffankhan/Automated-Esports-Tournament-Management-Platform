@@ -68,7 +68,7 @@ class Ticket(BaseDbModel):
     id = fields.IntField(pk=True)
     guild_id = fields.BigIntField(index=True)
     channel_id = fields.BigIntField(unique=True)
-    opener_id = fields.BigIntField()
+    opener_id = fields.BigIntField(index=True)
 
     config: fields.ForeignKeyRelation[TicketConfig] = fields.ForeignKeyField(
         "models.TicketConfig", related_name="tickets", on_delete=fields.CASCADE

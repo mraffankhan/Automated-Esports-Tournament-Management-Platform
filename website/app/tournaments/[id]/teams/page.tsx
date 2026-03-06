@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase";
+import { db } from "@/lib/db";
 import Link from "next/link";
 import { ArrowLeft, Users, Shield, Crown } from "lucide-react";
 
@@ -8,28 +8,21 @@ export default async function TournamentTeamsPage({ params }: { params: { id: st
     const { id } = await params;
 
     // Fetch tournament details
-    const { data: tourney } = await supabase
-        .from("tm.tourney")
-        .select("*")
-        .eq("id", id)
-        .single();
+    const [tourneyRows]: any = await db.execute(
+        `SELECT * FROM \`tm.tourney\` WHERE id = ? LIMIT 1`,
+        [id]
+    );
+    const tourney = tourneyRows?.[0] || null;
 
     // Fetch registered teams using the join table
-    // The relationship is: tourney -> tm.tourney_tm.register -> tm.register (Slot)
-    const { data: teamData, error: teamError } = await supabase
-        .from('tm.tourney_tm.register')
-        .select(`
-            tmslot_id,
-            "tm.register" (*)
-        `)
-        .eq('"tm.tourney_id"', id);
-
-    if (teamError) {
-        console.error("Error fetching teams:", teamError);
-    }
-
-    // Extract the slots (teams) from the join data
-    const teams = teamData?.map((item: any) => item['tm.register']) || [];
+    const [teamRows]: any = await db.execute(
+        `SELECT s.* FROM \`tm.tourney_tm.register\` j 
+         INNER JOIN \`tm.register\` s ON s.id = j.tmslot_id 
+         WHERE j.\`tm.tourney_id\` = ? 
+         ORDER BY s.num ASC`,
+        [id]
+    );
+    const teams = teamRows || [];
 
     return (
         <div className="min-h-screen py-32 px-4 sm:px-6 lg:px-8 bg-black">

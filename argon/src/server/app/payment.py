@@ -82,7 +82,8 @@ async def premium_success(request: Request, txnId: str):
     end_time = u.premium_expire_time + plan.duration if u.is_premium else datetime.now(constants.IST) + plan.duration
 
     await User.get(pk=u.pk).update(is_premium=True, premium_expire_time=end_time)
-    await User.get(pk=u.user_id).update(made_premium=ArrayAppend("made_premium", u.user_id))
+    u.made_premium.append(u.user_id)
+    await u.save(update_fields=["made_premium"])
 
     bot.dispatch("premium_purchase", record.txnid)
 

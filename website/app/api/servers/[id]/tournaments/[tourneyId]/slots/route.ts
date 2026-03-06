@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { db } from '@/lib/db';
 
 export async function GET(
     req: NextRequest,
@@ -9,33 +9,26 @@ export async function GET(
         const { tourneyId } = await params;
 
         // Get slot IDs from junction table
-        const { data: junctionData, error: jError } = await supabase
-            .from('tm.tourney_tm.register')
-            .select('tmslot_id')
-            .eq('tm.tourney_id', tourneyId);
+        const [junctionRows]: any = await db.execute(
+            `SELECT tmslot_id FROM \`tm.tourney_tm.register\` WHERE \`tm.tourney_id\` = ?`,
+            [tourneyId]
+        );
 
-        if (jError) {
-            console.error('Junction query error:', jError);
-            return NextResponse.json({ error: 'Failed to fetch slots' }, { status: 500 });
-        }
-
-        if (!junctionData || junctionData.length === 0) {
+        if (!junctionRows || junctionRows.length === 0) {
             return NextResponse.json([]);
         }
 
-        const slotIds = junctionData.map((j: any) => j.tmslot_id);
+        const slotIds = junctionRows.map((j: any) => j.tmslot_id);
+        const placeholders = slotIds.map(() => '?').join(',');
 
         // Get actual slot data
-        const { data: slots, error: sError } = await supabase
-            .from('tm.register')
-            .select('id, num, team_name, leader_id, members, jump_url, confirm_jump_url')
-            .in('id', slotIds)
-            .order('num', { ascending: true });
-
-        if (sError) {
-            console.error('Slots query error:', sError);
-            return NextResponse.json({ error: 'Failed to fetch slots' }, { status: 500 });
-        }
+        const [slots]: any = await db.execute(
+            `SELECT id, num, team_name, leader_id, members, jump_url, confirm_jump_url 
+             FROM \`tm.register\` 
+             WHERE id IN (${placeholders}) 
+             ORDER BY num ASC`,
+            slotIds
+        );
 
         return NextResponse.json(slots || []);
 
@@ -58,22 +51,16 @@ export async function DELETE(
         }
 
         // Remove from junction table
-        await supabase
-            .from('tm.tourney_tm.register')
-            .delete()
-            .eq('tm.tourney_id', tourneyId)
-            .eq('tmslot_id', slotId);
+        await db.execute(
+            `DELETE FROM \`tm.tourney_tm.register\` WHERE \`tm.tourney_id\` = ? AND tmslot_id = ?`,
+            [tourneyId, slotId]
+        );
 
         // Delete the slot itself
-        const { error } = await supabase
-            .from('tm.register')
-            .delete()
-            .eq('id', slotId);
-
-        if (error) {
-            console.error('Slot delete error:', error);
-            return NextResponse.json({ error: 'Failed to delete slot' }, { status: 500 });
-        }
+        await db.execute(
+            `DELETE FROM \`tm.register\` WHERE id = ?`,
+            [slotId]
+        );
 
         return NextResponse.json({ success: true });
 

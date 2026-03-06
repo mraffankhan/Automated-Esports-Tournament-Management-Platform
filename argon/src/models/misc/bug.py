@@ -68,7 +68,7 @@ class BugTicket(BaseDbModel):
     id = fields.IntField(pk=True)
     guild_id = fields.BigIntField(index=True)
     channel_id = fields.BigIntField(unique=True)
-    opener_id = fields.BigIntField()
+    opener_id = fields.BigIntField(index=True)
 
     config: fields.ForeignKeyRelation[BugConfig] = fields.ForeignKeyField(
         "models.BugConfig", related_name="bugs", on_delete=fields.CASCADE

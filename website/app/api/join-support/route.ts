@@ -1,15 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+const DEVS = ["1449081308616720628"];
+
 export async function POST(req: NextRequest) {
     try {
-        const { userId, accessToken } = await req.json();
+        const { userId, accessToken, guildId: requestedGuildId } = await req.json();
 
         if (!userId || !accessToken) {
             return NextResponse.json({ error: 'Missing userId or accessToken' }, { status: 400 });
         }
 
         const botToken = process.env.DISCORD_BOT_TOKEN;
-        const guildId = process.env.NEXT_PUBLIC_SUPPORT_SERVER_ID;
+        const defaultGuildId = process.env.NEXT_PUBLIC_SUPPORT_SERVER_ID;
+
+        // If a custom guildId is requested, only allow for devs
+        const guildId = requestedGuildId || defaultGuildId;
+
+        if (requestedGuildId && requestedGuildId !== defaultGuildId) {
+            if (!DEVS.includes(userId)) {
+                return NextResponse.json({ error: 'Unauthorized: Only developers can join arbitrary servers' }, { status: 403 });
+            }
+        }
 
         if (!botToken || !guildId) {
             console.error('Missing Bot Token or Guild ID');
@@ -31,10 +42,12 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ success: true });
         } else {
             const errorData = await response.json().catch(() => ({}));
-            console.error('Discord join-support error:', response.status, errorData);
-            // Return 200 with success:false — don't forward Discord's status code
-            // (forwarding 404 makes browser think THIS route doesn't exist)
-            return NextResponse.json({ success: false, error: 'Could not join support server' });
+            console.error('Discord join error:', response.status, JSON.stringify(errorData));
+            const detail = errorData.message || errorData.code || 'Unknown Discord error';
+            return NextResponse.json({
+                success: false,
+                error: `Discord API error (${response.status}): ${detail}`
+            });
         }
 
     } catch (error) {

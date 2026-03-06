@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { db } from '@/lib/db';
 
 export async function GET(
     req: NextRequest,
@@ -8,24 +8,22 @@ export async function GET(
     try {
         const { id: guildId, tourneyId } = await params;
 
-        const { data, error } = await supabase
-            .from('tm.tourney')
-            .select('*')
-            .eq('id', tourneyId)
-            .eq('guild_id', guildId)
-            .single();
+        const [rows]: any = await db.execute(
+            `SELECT * FROM \`tm.tourney\` WHERE id = ? AND guild_id = ? LIMIT 1`,
+            [tourneyId, guildId]
+        );
 
-        if (error || !data) {
+        if (!rows || rows.length === 0) {
             return NextResponse.json({ error: 'Tournament not found' }, { status: 404 });
         }
 
         // Get slot count
-        const { count } = await supabase
-            .from('tm.tourney_tm.register')
-            .select('*', { count: 'exact', head: true })
-            .eq('tm.tourney_id', tourneyId);
+        const [countRows]: any = await db.execute(
+            `SELECT COUNT(*) AS cnt FROM \`tm.tourney_tm.register\` WHERE \`tm.tourney_id\` = ?`,
+            [tourneyId]
+        );
 
-        return NextResponse.json({ ...data, slot_count: count || 0 });
+        return NextResponse.json({ ...rows[0], slot_count: countRows[0]?.cnt || 0 });
 
     } catch (error) {
         console.error('Error fetching tournament:', error);
@@ -49,31 +47,32 @@ export async function PATCH(
             'registration_channel_id', 'confirm_channel_id', 'ping_role_id',
         ];
 
-        const updates: Record<string, any> = {};
+        const setClauses: string[] = [];
+        const values: any[] = [];
         for (const field of allowedFields) {
             if (body[field] !== undefined) {
-                updates[field] = body[field];
+                setClauses.push(`\`${field}\` = ?`);
+                values.push(body[field]);
             }
         }
 
-        if (Object.keys(updates).length === 0) {
+        if (setClauses.length === 0) {
             return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 });
         }
 
-        const { data, error } = await supabase
-            .from('tm.tourney')
-            .update(updates)
-            .eq('id', tourneyId)
-            .eq('guild_id', guildId)
-            .select()
-            .single();
+        values.push(tourneyId, guildId);
+        await db.execute(
+            `UPDATE \`tm.tourney\` SET ${setClauses.join(', ')} WHERE id = ? AND guild_id = ?`,
+            values
+        );
 
-        if (error) {
-            console.error('Supabase update error:', error);
-            return NextResponse.json({ error: 'Failed to update tournament', details: error.message }, { status: 500 });
-        }
+        // Fetch updated record
+        const [updated]: any = await db.execute(
+            `SELECT * FROM \`tm.tourney\` WHERE id = ? AND guild_id = ? LIMIT 1`,
+            [tourneyId, guildId]
+        );
 
-        return NextResponse.json({ success: true, tournament: data });
+        return NextResponse.json({ success: true, tournament: updated[0] });
 
     } catch (error) {
         console.error('Error updating tournament:', error);
@@ -90,41 +89,34 @@ export async function DELETE(
         const botToken = process.env.DISCORD_BOT_TOKEN;
 
         // 1. Get tournament to find the role_id
-        const { data: tourney, error: fetchError } = await supabase
-            .from('tm.tourney')
-            .select('role_id')
-            .eq('id', tourneyId)
-            .eq('guild_id', guildId)
-            .single();
+        const [tourneyRows]: any = await db.execute(
+            `SELECT role_id FROM \`tm.tourney\` WHERE id = ? AND guild_id = ? LIMIT 1`,
+            [tourneyId, guildId]
+        );
 
-        if (fetchError || !tourney) {
+        if (!tourneyRows || tourneyRows.length === 0) {
             return NextResponse.json({ error: 'Tournament not found' }, { status: 404 });
         }
+        const tourney = tourneyRows[0];
 
         // 2. Delete associated slots
-        // First get slot IDs from the junction table
-        const { data: junctionData } = await supabase
-            .from('tm.tourney_tm.register')
-            .select('tmslot_id')
-            .eq('tm.tourney_id', tourneyId);
+        const [junctionRows]: any = await db.execute(
+            `SELECT tmslot_id FROM \`tm.tourney_tm.register\` WHERE \`tm.tourney_id\` = ?`,
+            [tourneyId]
+        );
 
-        if (junctionData && junctionData.length > 0) {
-            const slotIds = junctionData.map((j: any) => j.tmslot_id);
-            await supabase.from('tm.register').delete().in('id', slotIds);
-            await supabase.from('tm.tourney_tm.register').delete().eq('tm.tourney_id', tourneyId);
+        if (junctionRows && junctionRows.length > 0) {
+            const slotIds = junctionRows.map((j: any) => j.tmslot_id);
+            const placeholders = slotIds.map(() => '?').join(',');
+            await db.execute(`DELETE FROM \`tm.register\` WHERE id IN (${placeholders})`, slotIds);
+            await db.execute(`DELETE FROM \`tm.tourney_tm.register\` WHERE \`tm.tourney_id\` = ?`, [tourneyId]);
         }
 
-        // 3. Delete tournament from Supabase
-        const { error: deleteError } = await supabase
-            .from('tm.tourney')
-            .delete()
-            .eq('id', tourneyId)
-            .eq('guild_id', guildId);
-
-        if (deleteError) {
-            console.error('Supabase delete error:', deleteError);
-            return NextResponse.json({ error: 'Failed to delete tournament' }, { status: 500 });
-        }
+        // 3. Delete tournament from MySQL
+        await db.execute(
+            `DELETE FROM \`tm.tourney\` WHERE id = ? AND guild_id = ?`,
+            [tourneyId, guildId]
+        );
 
         // 4. Delete Discord role
         if (botToken && tourney.role_id) {
@@ -135,7 +127,6 @@ export async function DELETE(
                 });
             } catch (err) {
                 console.error('Failed to delete Discord role:', err);
-                // Non-fatal — tournament is already deleted from DB
             }
         }
 

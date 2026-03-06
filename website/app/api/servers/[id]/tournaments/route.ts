@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { db } from '@/lib/db';
 
 export async function GET(
     req: NextRequest,
@@ -8,18 +8,15 @@ export async function GET(
     try {
         const { id: guildId } = await params;
 
-        const { data, error } = await supabase
-            .from('tm.tourney')
-            .select('id, guild_id, name, registration_channel_id, confirm_channel_id, role_id, required_mentions, total_slots, host_id, started_at, closed_at, multiregister, teamname_compulsion')
-            .eq('guild_id', guildId)
-            .order('id', { ascending: false });
+        const [rows]: any = await db.execute(
+            `SELECT id, guild_id, name, registration_channel_id, confirm_channel_id, role_id, required_mentions, total_slots, host_id, started_at, closed_at, multiregister, teamname_compulsion 
+             FROM \`tm.tourney\` 
+             WHERE guild_id = ? 
+             ORDER BY id DESC`,
+            [guildId]
+        );
 
-        if (error) {
-            console.error('Supabase error fetching tournaments:', error);
-            return NextResponse.json({ error: 'Failed to fetch tournaments' }, { status: 500 });
-        }
-
-        const tournaments = (data || []).map(t => ({
+        const tournaments = (rows || []).map((t: any) => ({
             ...t,
             guild_id: String(t.guild_id)
         }));
@@ -85,35 +82,34 @@ export async function POST(
         // 2. Generate a unique ID for the tournament (snowflake-like)
         const tourneyId = Date.now();
 
-        // 3. Insert tournament into Supabase
-        const { data, error } = await supabase
-            .from('tm.tourney')
-            .insert({
-                id: tourneyId,
-                guild_id: guildId,
-                name: name,
-                registration_channel_id: registration_channel_id,
-                confirm_channel_id: confirm_channel_id,
-                role_id: role.id,
-                required_mentions: required_mentions,
-                total_slots: total_slots,
-                host_id: host_id,
-                multiregister: false,
-                teamname_compulsion: false,
-                no_duplicate_name: true,
-                autodelete_rejected: false,
-                slotlist_start: 2,
-                required_lines: 0,
-                allow_duplicate_tags: true,
-                banned_users: [],
-                emojis: { tick: "\u2705", cross: "\u274C" },
-                ping_role_id: ping_role_id,
-            })
-            .select()
-            .single();
+        // 3. Insert tournament into MySQL
+        const emojisJSON = JSON.stringify({ tick: "✅", cross: "❌" });
 
-        if (error) {
-            console.error('Supabase insert error:', error);
+        try {
+            await db.execute(
+                `INSERT INTO \`tm.tourney\` (
+                    id, guild_id, name, registration_channel_id, confirm_channel_id, role_id, 
+                    required_mentions, total_slots, host_id, multiregister, teamname_compulsion, 
+                    no_duplicate_name, autodelete_rejected, slotlist_start, required_lines, 
+                    allow_duplicate_tags, banned_users, emojis, ping_role_id
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [
+                    tourneyId, guildId, name, registration_channel_id, confirm_channel_id, role.id,
+                    required_mentions, total_slots, host_id, 0, 0,
+                    1, 0, 2, 0,
+                    1, JSON.stringify([]), emojisJSON, ping_role_id
+                ]
+            );
+
+            // Fetch the inserted record to return it
+            const [inserted]: any = await db.execute(
+                `SELECT * FROM \`tm.tourney\` WHERE id = ? LIMIT 1`,
+                [tourneyId]
+            );
+
+            return NextResponse.json({ success: true, tournament: inserted[0] });
+        } catch (error: any) {
+            console.error('MySQL insert error:', error);
             // Clean up the created role if DB insert fails
             await fetch(`https://discord.com/api/v10/guilds/${guildId}/roles/${role.id}`, {
                 method: 'DELETE',
@@ -121,8 +117,6 @@ export async function POST(
             });
             return NextResponse.json({ error: 'Failed to create tournament in database', details: error.message }, { status: 500 });
         }
-
-        return NextResponse.json({ success: true, tournament: data });
 
     } catch (error) {
         console.error('Error creating tournament:', error);

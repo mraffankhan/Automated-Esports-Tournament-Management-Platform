@@ -67,8 +67,12 @@ class OnOne(ScrimsButton):
 
     async def callback(self, interaction: discord.Interaction):
         await interaction.response.defer()
-        func = (ArrayAppend, ArrayRemove)[AutocleanType.channel in self.view.record.autoclean]
-        await Scrim.filter(pk=self.view.record.id).update(autoclean=func("autoclean", AutocleanType.channel))
+        
+        if AutocleanType.channel in self.view.record.autoclean:
+             self.view.record.autoclean.remove(AutocleanType.channel)
+        else:
+             self.view.record.autoclean.append(AutocleanType.channel)
+        await self.view.record.save(update_fields=["autoclean"])
         await self.view.refresh_view()
 
         await self.view.ctx.success(
@@ -84,8 +88,11 @@ class OnTwo(ScrimsButton):
     async def callback(self, interaction: discord.Interaction):
         await interaction.response.defer()
 
-        func = (ArrayAppend, ArrayRemove)[AutocleanType.role in self.view.record.autoclean]
-        await Scrim.filter(pk=self.view.record.id).update(autoclean=func("autoclean", AutocleanType.role))
+        if AutocleanType.role in self.view.record.autoclean:
+             self.view.record.autoclean.remove(AutocleanType.role)
+        else:
+             self.view.record.autoclean.append(AutocleanType.role)
+        await self.view.record.save(update_fields=["autoclean"])
         await self.view.refresh_view()
 
         await self.view.ctx.success(

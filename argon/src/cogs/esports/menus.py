@@ -489,14 +489,20 @@ class AutocleanMenu(menus.Menu):
 
     @menus.button(keycap_digit(1))
     async def on_one(self, payload):
-        func = (ArrayAppend, ArrayRemove)[constants.AutocleanType.channel in self.scrim.autoclean]
-        await Scrim.filter(pk=self.scrim.id).update(autoclean=func("autoclean", constants.AutocleanType.channel))
+        if constants.AutocleanType.channel in self.scrim.autoclean:
+             self.scrim.autoclean.remove(constants.AutocleanType.channel)
+        else:
+             self.scrim.autoclean.append(constants.AutocleanType.channel)
+        await self.scrim.save(update_fields=["autoclean"])
         await self.refresh()
 
     @menus.button(keycap_digit(2))
     async def on_two(self, payload):
-        func = (ArrayAppend, ArrayRemove)[constants.AutocleanType.role in self.scrim.autoclean]
-        await Scrim.filter(pk=self.scrim.id).update(autoclean=func("autoclean", constants.AutocleanType.role))
+        if constants.AutocleanType.role in self.scrim.autoclean:
+             self.scrim.autoclean.remove(constants.AutocleanType.role)
+        else:
+             self.scrim.autoclean.append(constants.AutocleanType.role)
+        await self.scrim.save(update_fields=["autoclean"])
         await self.refresh()
 
     @menus.button(keycap_digit(3))
@@ -562,8 +568,11 @@ class DaysMenu(menus.Menu):
 
     async def update_scrim(self, day):
         # Lets do some magic
-        func = (ArrayAppend, ArrayRemove)[day in self.scrim.open_days]
-        await Scrim.filter(pk=self.scrim.id).update(open_days=func("open_days", day))
+        if day in self.scrim.open_days:
+             self.scrim.open_days.remove(day)
+        else:
+             self.scrim.open_days.append(day)
+        await self.scrim.save(update_fields=["open_days"])
         await self.refresh()
 
     async def send_initial_message(self, ctx, channel):

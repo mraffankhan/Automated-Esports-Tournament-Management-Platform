@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase";
+import { db } from "@/lib/db";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import { Trophy, Users, Calendar, ArrowRight, Shield } from "lucide-react";
@@ -6,12 +6,13 @@ import { Trophy, Users, Calendar, ArrowRight, Shield } from "lucide-react";
 export const revalidate = 60;
 
 export default async function TournamentsPage() {
-    const { data: tournaments } = await supabase
-        .from("tm.tourney")
-        .select(`
-            *,
-            registrations: "tm.tourney_tm.register" (count)
-        `);
+    const [tourneyRows]: any = await db.execute(
+        `SELECT t.*, 
+            (SELECT COUNT(*) FROM \`tm.tourney_tm.register\` j WHERE j.\`tm.tourney_id\` = t.id) AS registration_count
+         FROM \`tm.tourney\` t
+         ORDER BY t.id DESC`
+    );
+    const tournaments = tourneyRows || [];
 
     return (
         <div className="min-h-screen bg-black text-white relative overflow-hidden">
@@ -59,7 +60,7 @@ function TournamentCard({ tourney }: { tourney: any }) {
     const statusText = isOpen ? "REGISTRATION OPEN" : "REGISTRATION CLOSED";
 
     // Get team count
-    const teamCount = tourney.registrations?.[0]?.count || 0;
+    const teamCount = tourney.registration_count || 0;
 
     return (
         <div className="group relative w-full bg-black/40 backdrop-blur-md border border-white/10 rounded-3xl overflow-hidden hover:border-cyan-500/30 transition-all duration-300 hover:shadow-[0_0_30px_rgba(6,182,212,0.15)]">

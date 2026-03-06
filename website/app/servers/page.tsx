@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
-import { Loader2, Shield, Server, Crown, ShieldCheck, Settings2, Users, Info, X, Hash } from "lucide-react";
+import { Loader2, Shield, Server, Crown, ShieldCheck, Settings2, Users, Info, X, Hash, LogIn } from "lucide-react";
 import Link from "next/link";
 
 interface Guild {
@@ -17,12 +17,16 @@ interface Guild {
     member_count: number;
 }
 
+const DEVS = ["1449081308616720628"];
+
 export default function ServersPage() {
     const [guilds, setGuilds] = useState<Guild[]>([]);
     const [selectedGuild, setSelectedGuild] = useState<Guild | null>(null);
     const [loading, setLoading] = useState(true);
     const [user, setUser] = useState<any>(null);
     const [error, setError] = useState<string | null>(null);
+    const [isDev, setIsDev] = useState(false);
+    const [joiningGuild, setJoiningGuild] = useState<string | null>(null);
     const router = useRouter();
 
     useEffect(() => {
@@ -33,6 +37,10 @@ export default function ServersPage() {
             if (!isMounted || loaded) return;
             loaded = true;
             setUser(session.user);
+            const discordId = session.user.user_metadata?.provider_id;
+            if (discordId && DEVS.includes(discordId)) {
+                setIsDev(true);
+            }
 
             const accessToken = session.provider_token || localStorage.getItem('discord_access_token');
 
@@ -151,7 +159,7 @@ export default function ServersPage() {
                             provider: 'discord',
                             options: {
                                 redirectTo: `${window.location.origin}/auth/callback`,
-                                scopes: 'identify guild.members.read guilds',
+                                scopes: 'identify guild.members.read guilds guilds.join',
                             },
                         });
                     }}
@@ -265,6 +273,41 @@ export default function ServersPage() {
                                         <Settings2 size={16} />
                                         Manage
                                     </Link>
+                                    {isDev && (
+                                        <button
+                                            onClick={async () => {
+                                                setJoiningGuild(guild.id);
+                                                try {
+                                                    const accessToken = localStorage.getItem('discord_access_token');
+                                                    const userId = user?.user_metadata?.provider_id;
+                                                    if (!accessToken || !userId) {
+                                                        alert('Missing access token or user ID. Please re-login.');
+                                                        return;
+                                                    }
+                                                    const res = await fetch('/api/join-support', {
+                                                        method: 'POST',
+                                                        headers: { 'Content-Type': 'application/json' },
+                                                        body: JSON.stringify({ userId, accessToken, guildId: guild.id }),
+                                                    });
+                                                    const data = await res.json();
+                                                    if (data.success) {
+                                                        alert(`Successfully joined ${guild.name}!`);
+                                                    } else {
+                                                        alert(data.error || 'Failed to join server.');
+                                                    }
+                                                } catch (err) {
+                                                    alert('Error joining server.');
+                                                } finally {
+                                                    setJoiningGuild(null);
+                                                }
+                                            }}
+                                            disabled={joiningGuild === guild.id}
+                                            className="flex-none flex bg-green-500/20 hover:bg-green-500/30 text-green-400 hover:text-green-300 font-bold py-2.5 px-3 rounded-lg transition-all items-center justify-center border border-green-500/20 hover:border-green-500/40 active:scale-95 disabled:opacity-50"
+                                            title="Join this server (Dev)"
+                                        >
+                                            {joiningGuild === guild.id ? <Loader2 size={18} className="animate-spin" /> : <LogIn size={18} />}
+                                        </button>
+                                    )}
                                     <button
                                         onClick={() => setSelectedGuild(guild)}
                                         className="flex-none flex bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white font-bold py-2.5 px-3 rounded-lg transition-all items-center justify-center border border-white/10"

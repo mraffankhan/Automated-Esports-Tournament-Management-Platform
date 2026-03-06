@@ -25,11 +25,17 @@ class VotesCog(Cog):
         if not member.guild or not member.guild.id == self.bot.config.SERVER_ID:
             return
 
-        if await Votes.get(user_id=member.id, is_voter=True).exists():
-            await member.add_roles(discord.Object(id=self.bot.config.VOTER_ROLE))
+        if self.bot.config.VOTER_ROLE and await Votes.get(user_id=member.id, is_voter=True).exists():
+            try:
+                await member.add_roles(discord.Object(id=self.bot.config.VOTER_ROLE))
+            except Exception:
+                pass
 
-        if await User.get(pk=member.id, is_premium=True).exists():
-            await member.add_roles(discord.Object(id=self.bot.config.PREMIUM_ROLE))
+        if self.bot.config.PREMIUM_ROLE and await User.get(pk=member.id, is_premium=True).exists():
+            try:
+                await member.add_roles(discord.Object(id=self.bot.config.PREMIUM_ROLE))
+            except Exception:
+                pass
 
     @Cog.listener()
     async def on_vote_timer_complete(self, timer: Timer):

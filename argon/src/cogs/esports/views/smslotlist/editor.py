@@ -123,7 +123,8 @@ class ScrimsSlotlistEditor(discord.ui.View):
                         m = self.scrim.guild.get_member(_slot.user_id)
                         await m.remove_roles(discord.Object(id=self.scrim.role_id))
 
-            await self.scrim.make_changes(available_slots=ArrayAppend("available_slots", _slot.num))
+            self.scrim.available_slots.append(_slot.num)
+            await self.scrim.save(update_fields=["available_slots"])
             await AssignedSlot.filter(pk=slot_id).update(team_name="❌")
             await self.scrim.refresh_slotlist_message(self.slotlist_message)
 
@@ -183,7 +184,9 @@ class ScrimsSlotlistEditor(discord.ui.View):
 
             _slot = await AssignedSlot.create(num=slot_id, team_name=team_name, user_id=user_id)
             await self.scrim.assigned_slots.add(_slot)
-            await self.scrim.make_changes(available_slots=ArrayRemove("available_slots", slot_id))
+            if slot_id in self.scrim.available_slots:
+                self.scrim.available_slots.remove(slot_id)
+                await self.scrim.save(update_fields=["available_slots"])
 
             await self.scrim.refresh_slotlist_message(self.slotlist_message)
 

@@ -62,6 +62,8 @@ class ScrimsCancel(discord.ui.Button):
             await _slot.delete()
 
             await Scrim.filter(pk=scrim_id).update(available_slots=ArrayAppend("available_slots", _slot.num))
+            scrim.available_slots.append(_slot.num)
+            await scrim.save(update_fields=["available_slots"])
 
             link = f"https://discord.com/channels/{scrim.guild_id}/{interaction.channel_id}/{self.view.record.message_id}"
             await scrim.dispatch_reminders(interaction.channel, link)

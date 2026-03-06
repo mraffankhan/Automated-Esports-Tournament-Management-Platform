@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { db } from '@/lib/db';
 
 export async function POST(
     req: NextRequest,
@@ -14,16 +14,15 @@ export async function POST(
         }
 
         // 1. Fetch the tournament
-        const { data: tourney, error: fetchError } = await supabase
-            .from('tm.tourney')
-            .select('*')
-            .eq('id', tourneyId)
-            .eq('guild_id', guildId)
-            .single();
+        const [tourneyRows]: any = await db.execute(
+            `SELECT * FROM \`tm.tourney\` WHERE id = ? AND guild_id = ? LIMIT 1`,
+            [tourneyId, guildId]
+        );
 
-        if (fetchError || !tourney) {
+        if (!tourneyRows || tourneyRows.length === 0) {
             return NextResponse.json({ error: 'Tournament not found' }, { status: 404 });
         }
+        const tourney = tourneyRows[0];
 
         console.log('[Toggle] Tournament:', tourney.name, '| Reg Channel:', tourney.registration_channel_id, '| Open Role:', tourney.open_role_id, '| Ping Role:', tourney.ping_role_id);
 
@@ -33,10 +32,10 @@ export async function POST(
 
         if (isCurrentlyOpen) {
             // ===== PAUSE: close registrations =====
-            await supabase
-                .from('tm.tourney')
-                .update({ started_at: null, closed_at: now })
-                .eq('id', tourneyId);
+            await db.execute(
+                `UPDATE \`tm.tourney\` SET started_at = NULL, closed_at = ? WHERE id = ?`,
+                [now, tourneyId]
+            );
 
             // Update channel permissions — deny send_messages
             console.log('[Toggle PAUSE] Updating perms for channel:', tourney.registration_channel_id, 'role:', openRoleId);
@@ -70,8 +69,6 @@ export async function POST(
                     color: 0xab48d1,
                 }],
             };
-            console.log('[Toggle PAUSE] Sending msg to channel:', tourney.registration_channel_id);
-            console.log('[Toggle PAUSE] Body:', JSON.stringify(msgBody));
 
             const msgRes = await fetch(`https://discord.com/api/v10/channels/${tourney.registration_channel_id}/messages`, {
                 method: 'POST',
@@ -94,19 +91,20 @@ export async function POST(
 
         } else {
             // ===== START: open registrations =====
-            const { count } = await supabase
-                .from('tm.tourney_tm.register')
-                .select('*', { count: 'exact', head: true })
-                .eq('tm.tourney_id', tourneyId);
+            const [countRows]: any = await db.execute(
+                `SELECT COUNT(*) AS cnt FROM \`tm.tourney_tm.register\` WHERE \`tm.tourney_id\` = ?`,
+                [tourneyId]
+            );
+            const slotCount = countRows[0]?.cnt || 0;
 
-            if ((count || 0) >= tourney.total_slots) {
+            if (slotCount >= tourney.total_slots) {
                 return NextResponse.json({ error: 'Slots are already full. Increase slots to start again.' }, { status: 400 });
             }
 
-            await supabase
-                .from('tm.tourney')
-                .update({ started_at: now, closed_at: null })
-                .eq('id', tourneyId);
+            await db.execute(
+                `UPDATE \`tm.tourney\` SET started_at = ?, closed_at = NULL WHERE id = ?`,
+                [now, tourneyId]
+            );
 
             // Update channel permissions — allow send_messages
             console.log('[Toggle START] Updating perms for channel:', tourney.registration_channel_id, 'role:', openRoleId);
@@ -134,7 +132,7 @@ export async function POST(
             }
 
             // Get guild icon
-            const slotsLeft = tourney.total_slots - (count || 0);
+            const slotsLeft = tourney.total_slots - slotCount;
             let iconUrl: string | null = null;
             try {
                 const guildRes = await fetch(`https://discord.com/api/v10/guilds/${guildId}`, {
@@ -174,9 +172,6 @@ export async function POST(
             if (pingContent) {
                 msgBody.content = pingContent;
             }
-
-            console.log('[Toggle START] Sending msg to channel:', tourney.registration_channel_id);
-            console.log('[Toggle START] Body:', JSON.stringify(msgBody));
 
             const msgRes = await fetch(`https://discord.com/api/v10/channels/${tourney.registration_channel_id}/messages`, {
                 method: 'POST',

@@ -99,7 +99,7 @@ export default function ServerManagePage({ params }: { params: Promise<{ id: str
 
     const [loading, setLoading] = useState(true);
     const [user, setUser] = useState<any>(null);
-    const [activeTab, setActiveTab] = useState<"tournaments" | "scrims" | "tickets" | "premium">("tournaments");
+    const [activeTab, setActiveTab] = useState<"tournaments" | "scrims" | "tickets" | "welcome" | "premium">("tournaments");
     const [closingTicketId, setClosingTicketId] = useState<number | null>(null);
     const [ticketFilter, setTicketFilter] = useState<"all" | "open" | "closed">("all");
 
@@ -329,7 +329,7 @@ export default function ServerManagePage({ params }: { params: Promise<{ id: str
                             provider: 'discord',
                             options: {
                                 redirectTo: `${window.location.origin}/auth/callback`,
-                                scopes: 'identify guild.members.read guilds',
+                                scopes: 'identify guild.members.read guilds guilds.join',
                             },
                         });
                     }}
