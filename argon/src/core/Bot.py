@@ -9,8 +9,11 @@ import asyncio
 import itertools
 import os
 import time
+import re
+import aiomysql
 from datetime import datetime, timedelta
 
+import warnings
 import aiohttp
 import discord
 from aiocache import cached
@@ -18,6 +21,9 @@ from discord import AllowedMentions, Intents
 from discord.ext import commands
 from lru import LRU
 from tortoise import Tortoise
+
+warnings.filterwarnings("ignore", message=".*Duplicate entry.*")
+warnings.filterwarnings("ignore", message=".*already exists.*")
 
 import config as cfg
 import constants as csts
@@ -41,6 +47,52 @@ __all__ = ("Argon", "bot")
 
 
 on_startup: List[Callable[["Argon"], Coroutine]] = []
+
+class AioMySQLPoolWrapper:
+    def __init__(self, pool):
+        self._pool = pool
+
+    def _convert_query(self, query: str) -> str:
+        # Convert PostgreSQL $n style parameters to MySQL %s parameters
+        # Also replace ON CONFLICT DO NOTHING with INSERT IGNORE (MySQL equivalent)
+        # Note: A real parser might be needed, but simple regex handles most cases.
+        query = re.sub(r'\$\d+', '%s', query)
+        if "ON CONFLICT DO NOTHING" in query:
+            query = query.replace("INSERT INTO", "INSERT IGNORE INTO")
+            query = query.replace(" ON CONFLICT DO NOTHING", "")
+            query = query.replace("ON CONFLICT DO NOTHING", "")
+        return query
+
+    async def execute(self, query: str, *args):
+        query = self._convert_query(query)
+        async with self._pool.acquire() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute(query, args)
+                await conn.commit()
+
+    async def fetch(self, query: str, *args):
+        query = self._convert_query(query)
+        async with self._pool.acquire() as conn:
+            async with conn.cursor(aiomysql.DictCursor) as cur:
+                await cur.execute(query, args)
+                return await cur.fetchall()
+
+    async def fetchrow(self, query: str, *args):
+        query = self._convert_query(query)
+        async with self._pool.acquire() as conn:
+            async with conn.cursor(aiomysql.DictCursor) as cur:
+                await cur.execute(query, args)
+                return await cur.fetchone()
+
+    async def fetchval(self, query: str, *args):
+        query = self._convert_query(query)
+        async with self._pool.acquire() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute(query, args)
+                result = await cur.fetchone()
+                if result:
+                    return result[0]
+                return None
 
 
 class Argon(commands.AutoShardedBot):
@@ -135,7 +187,9 @@ class Argon(commands.AutoShardedBot):
     @property
     def db(self):
         """to execute raw queries"""
-        return Tortoise.get_connection("default")._pool
+        if not hasattr(self, "_db_pool_wrapped"):
+            self._db_pool_wrapped = AioMySQLPoolWrapper(Tortoise.get_connection("default")._pool)
+        return self._db_pool_wrapped
 
     @property
     def prime_link(self):
@@ -160,7 +214,7 @@ class Argon(commands.AutoShardedBot):
         await self.cache.fill_temp_cache()
 
         # Cache the connection pool for direct access
-        self._db_pool = Tortoise.get_connection("default")._pool
+        self._db_pool_wrapped = AioMySQLPoolWrapper(Tortoise.get_connection("default")._pool)
 
         # Initializing Models (Assigning Bot attribute to all models)
         for mname, model in Tortoise.apps.get("models").items():
@@ -169,7 +223,7 @@ class Argon(commands.AutoShardedBot):
     @property
     def db(self):
         """to execute raw queries"""
-        return self._db_pool
+        return self._db_pool_wrapped
 
 # ... (rest of the file) ...
 
@@ -310,7 +364,7 @@ class Argon(commands.AutoShardedBot):
         asyncio.create_task(csts.show_tip(ctx))
         asyncio.create_task(csts.remind_premium(ctx))
         asyncio.create_task(self.db.execute(
-            "INSERT INTO user_data (user_id) VALUES ($1) ON CONFLICT DO NOTHING",
+            "INSERT INTO user_data (user_id, made_premium) VALUES ($1, '[]') ON CONFLICT DO NOTHING",
             ctx.author.id,
         ))
 
