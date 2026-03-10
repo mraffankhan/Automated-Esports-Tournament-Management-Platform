@@ -193,7 +193,7 @@ class Argon(commands.AutoShardedBot):
 
     @property
     def prime_link(self):
-        return "https://genzconnect.pro/premium"
+        return "https://ravonixx.xyz/premium"
 
     @property
     def color(self):

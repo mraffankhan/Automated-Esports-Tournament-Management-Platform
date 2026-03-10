@@ -18,7 +18,7 @@ class PrivateWelcome(commands.Cog):
                 f"**Welcome RAVONIX HQ**\n"
                 f"> You're Our {member.guild.member_count}th Member\n"
                 f"> -# ~~                                                                                                               ~~\n"
-                f"> <a:dot:1477555382313291921>  [Website](https://genzconnect.pro)\n"
+                f"> <a:dot:1477555382313291921>  [Website](https://ravonixx.xyz)\n"
                 f"> <a:dot:1477555382313291921>  [Annonces](https://discord.com/channels/859292908304859156/1473179999816388639)\n"
                 f"> <a:dot:1477555382313291921>  [Bot Status](https://discord.com/channels/859292908304859156/1472549477339365407)\n"
                 f"> -# ~~                                                                                                               ~~\n"

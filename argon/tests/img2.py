@@ -2,7 +2,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 
 def add_watermark(image):
-    text = "Argon • genzconnect.pro"
+    text = "Argon • ravonixx.xyz"
     draw = ImageDraw.Draw(image)
 
     font = ImageFont.truetype("myfont.ttf", 25)

@@ -297,8 +297,8 @@ class ArgonMisc(Cog, name="ArgonMisc"):
         embed = discord.Embed(
             color=self.bot.color,
             description="**By using ARGON, you agree to following documents:**\n\n"
-                        " \u2022 [Terms of Services](https://genzconnect.pro/legal/terms)\n"
-                        " \u2022 [Privacy Policy](https://genzconnect.pro/legal/privacy)\n"
+                        " \u2022 [Terms of Services](https://ravonixx.xyz/legal/terms)\n"
+                        " \u2022 [Privacy Policy](https://ravonixx.xyz/legal/privacy)\n"
                         " \u2022 [Licence](https://github.com/mraffankhan/Automated-Esports-Tournament-Management-Platform/blob/main/LICENSE)\n"
                         " \u2022 [Github](https://github.com/mraffankhan/Automated-Esports-Tournament-Management-Platform)\n\n"
                         "For More info, help or queries regarding your data, visit our **[Support Server](https://discord.gg/ZT4KXFK3RD)**"
@@ -314,7 +314,7 @@ class ArgonMisc(Cog, name="ArgonMisc"):
             description=(
                 "Access the web dashboard to manage your server's scrims and tournaments with ease.\n\n"
                 "**Dashboard Link:**\n"
-                "https://genzconnect.pro/servers"
+                "https://ravonixx.xyz/servers"
             )
         )
         await ctx.send(embed=embed)

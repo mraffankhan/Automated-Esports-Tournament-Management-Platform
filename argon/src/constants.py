@@ -166,7 +166,7 @@ tips = (
     "I like your face : )",  # I really do
     "You can add a role to multiple users with `role @role @user @user2...` command.",
     "Argon can detect and verify youtube/insta/loco,etc. screenshots (`ssverify` cmd).",
-    "You can buy Argon Pro for 29INR only at <https://genzconnect.pro/premium>",
+    "You can buy Argon Pro for 29INR only at <https://ravonixx.xyz/premium>",
     "You can send customized embeds with `/embed` command.",
     "Scrims Slot Cancel-Claim is available for free with `slotm` command.",
     "You can create tourney groups with `tourney` command.",

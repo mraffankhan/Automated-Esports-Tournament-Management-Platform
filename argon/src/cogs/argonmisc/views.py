@@ -52,7 +52,7 @@ class VoteButton(BaseView):
         self.add_item(
             discord.ui.Button(
                 style=discord.ButtonStyle.link,
-                url="https://genzconnect.pro/vote",
+                url="https://ravonixx.xyz/vote",
                 label="Click Here",
             )
         )

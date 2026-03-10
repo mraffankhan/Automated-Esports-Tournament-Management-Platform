@@ -143,7 +143,7 @@ class DuplicateTags(ScrimsButton):
 
         if not await self.ctx.is_premium_guild():
             return await self.ctx.error(
-                "[Argon Premium](https://genzconnect.pro/premium) is required to use this feature.", 4
+                "[Argon Premium](https://ravonixx.xyz/premium) is required to use this feature.", 4
             )
 
         self.view.record.allow_duplicate_tags = not self.view.record.allow_duplicate_tags
@@ -197,7 +197,7 @@ class SetEmojis(ScrimsButton):
         await interaction.response.defer()
         if not await self.ctx.is_premium_guild():
             return await self.ctx.error(
-                "[Argon Premium](https://genzconnect.pro/premium) is required to use this feature.", 4
+                "[Argon Premium](https://ravonixx.xyz/premium) is required to use this feature.", 4
             )
 
         e = discord.Embed(color=self.ctx.bot.color, title="Edit scrims emojis")
