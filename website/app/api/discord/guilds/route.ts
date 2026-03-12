@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { db } from '@/lib/db';
+import { getSession } from '@/lib/session';
 
 // Discord permission flags
 const ADMINISTRATOR = 0x8;
@@ -7,10 +8,11 @@ const MANAGE_GUILD = 0x20;
 
 export async function POST(req: NextRequest) {
     try {
-        const { accessToken } = await req.json();
+        const session = await getSession();
+        const accessToken = session?.accessToken;
 
         if (!accessToken) {
-            return NextResponse.json({ error: 'Missing accessToken' }, { status: 400 });
+            return NextResponse.json({ error: 'Missing accessToken or not authenticated' }, { status: 400 });
         }
 
         // 1. Fetch user's guilds from Discord API (with rate limit retry)
@@ -88,22 +90,20 @@ export async function POST(req: NextRequest) {
 
         // 3. Check which of these guilds the bot is in (already fetched above for devs)
 
-        // 3b. Also check Supabase for premium/prefix data
+        // 3b. Also check MySQL for premium/prefix data
         const guildIds = manageableGuilds.map((g: any) => g.id);
         let botGuildsData: any[] = [];
-        try {
-            const { data, error } = await supabase
-                .from('guild_data')
-                .select('guild_id, is_premium, prefix')
-                .in('guild_id', guildIds);
-
-            if (error) {
-                console.error('Supabase guild_data error:', error);
-            } else {
-                botGuildsData = data || [];
+        if (guildIds.length > 0) {
+            try {
+                const placeholders = guildIds.map(() => '?').join(',');
+                const [rows] = await db.query(
+                    `SELECT guild_id, is_premium, prefix FROM guild_data WHERE guild_id IN (${placeholders})`,
+                    guildIds
+                );
+                botGuildsData = rows as any[];
+            } catch (err) {
+                console.error('MySQL fetch error:', err);
             }
-        } catch (err) {
-            console.error('Supabase fetch error:', err);
         }
 
         // 4. Merge and return

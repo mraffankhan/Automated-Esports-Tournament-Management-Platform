@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { db } from '@/lib/db';
 
 export async function GET(
     req: NextRequest,
@@ -9,17 +9,11 @@ export async function GET(
         const { id: guildId } = await params;
         console.log(`[Welcome API] GET request for guildId: ${guildId}`);
 
-        const { data, error } = await supabase
-            .from('welcome_configs')
-            // Convert channel_id to text to avoid BIGINT precision loss in JS
-            .select('*, channel_id::text')
-            .eq('guild_id', guildId)
-            .single();
-
-        if (error && error.code !== 'PGRST116') { // PGRST116 is "No rows found"
-            console.error('[Welcome API] Supabase error fetching welcome config:', error);
-            return NextResponse.json({ error: 'Failed to fetch welcome config' }, { status: 500 });
-        }
+        const [rows] = await db.query<any[]>(
+            `SELECT guild_id, channel_id, message, enabled, embed_enabled, embed_color, embed_title FROM welcome_configs WHERE guild_id = ? LIMIT 1`,
+            [guildId]
+        );
+        const data = rows.length > 0 ? rows[0] : null;
 
         const welcomeData = data || {
             guild_id: guildId,
@@ -55,24 +49,32 @@ export async function PUT(
         body.guild_id = guildId;
 
 
-        const { data, error } = await supabase
-            .from('welcome_configs')
-            .upsert({
-                guild_id: guildId, // Use the ID from the URL param
-                channel_id: body.channel_id,
-                message: body.message,
-                enabled: body.enabled,
-                embed_enabled: body.embed_enabled,
-                embed_color: body.embed_color,
-                embed_title: body.embed_title
-            })
-            .select('*, channel_id::text')
-            .single();
+        await db.query(`
+            INSERT INTO welcome_configs (
+                guild_id, channel_id, message, enabled, embed_enabled, embed_color, embed_title
+            ) VALUES (?, ?, ?, ?, ?, ?, ?)
+            ON DUPLICATE KEY UPDATE
+                channel_id = VALUES(channel_id),
+                message = VALUES(message),
+                enabled = VALUES(enabled),
+                embed_enabled = VALUES(embed_enabled),
+                embed_color = VALUES(embed_color),
+                embed_title = VALUES(embed_title)
+        `, [
+            guildId,
+            body.channel_id || null,
+            body.message || '',
+            body.enabled ? 1 : 0,
+            body.embed_enabled ? 1 : 0,
+            body.embed_color || 0,
+            body.embed_title || ''
+        ]);
 
-        if (error) {
-            console.error('[Welcome API] Supabase error updating welcome config:', error);
-            return NextResponse.json({ error: 'Failed to update welcome config' }, { status: 500 });
-        }
+        const [rows] = await db.query<any[]>(
+            `SELECT guild_id, channel_id, message, enabled, embed_enabled, embed_color, embed_title FROM welcome_configs WHERE guild_id = ? LIMIT 1`,
+            [guildId]
+        );
+        const data = rows[0];
 
         // Always use original guildId from URL params to ensure perfect precision
         if (data) {

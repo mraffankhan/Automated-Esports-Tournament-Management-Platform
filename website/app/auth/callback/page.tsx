@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+
 import { useRouter } from "next/navigation";
 import { Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 
@@ -14,59 +14,38 @@ export default function AuthCallbackPage() {
         let isMounted = true;
 
         const handleCallback = async () => {
+            // Re-route directly to the new Next.js auth callback backend if there's a code
+            const searchParams = new URLSearchParams(window.location.search);
+            const code = searchParams.get('code');
+
+            if (code) {
+                // If by some chance they hit this old frontend callback route with a code,
+                // redirect them to the correct backend route.
+                router.replace(`/api/auth/callback?code=${code}`);
+                return;
+            }
+
+            // Otherwise, just check if they are logged in.
             try {
-                // Supabase auto-detects the tokens from the URL hash/query
-                const { data: { session }, error } = await supabase.auth.getSession();
-
-                if (error) {
-                    if (isMounted) {
-                        setErrorMsg(error.message);
-                        setStatus("error");
-                    }
-                    return;
-                }
-
-                if (session) {
-                    // Persist Discord access token
-                    if (session.provider_token) {
-                        localStorage.setItem('discord_access_token', session.provider_token);
-                    }
-
-                    if (isMounted) {
-                        setStatus("success");
-                        // Small delay so user sees the success state
-                        setTimeout(() => {
-                            if (isMounted) router.replace("/servers");
-                        }, 500);
+                const res = await fetch('/api/auth/me');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.authenticated) {
+                        if (isMounted) {
+                            setStatus("success");
+                            setTimeout(() => {
+                                if (isMounted) router.replace("/servers");
+                            }, 500);
+                        }
+                    } else {
+                        throw new Error("Not authenticated");
                     }
                 } else {
-                    // No session yet — wait a moment for Supabase to process the hash
-                    await new Promise(r => setTimeout(r, 1500));
-
-                    const { data: { session: retrySession }, error: retryError } = await supabase.auth.getSession();
-
-                    if (retryError || !retrySession) {
-                        if (isMounted) {
-                            setErrorMsg("Could not complete authentication. Please try again.");
-                            setStatus("error");
-                        }
-                        return;
-                    }
-
-                    if (retrySession.provider_token) {
-                        localStorage.setItem('discord_access_token', retrySession.provider_token);
-                    }
-
-                    if (isMounted) {
-                        setStatus("success");
-                        setTimeout(() => {
-                            if (isMounted) router.replace("/servers");
-                        }, 500);
-                    }
+                    throw new Error("Failed to fetch session");
                 }
             } catch (err) {
                 if (isMounted) {
-                    setErrorMsg("An unexpected error occurred.");
+                    setErrorMsg("Authentication failed. Please try again.");
                     setStatus("error");
                 }
             }

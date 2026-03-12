@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { db } from '@/lib/db';
 
 export async function GET(
     req: NextRequest,
@@ -9,33 +9,23 @@ export async function GET(
         const { scrimId } = await params;
 
         // Get slot IDs from the join table
-        const { data: slotJoins, error: joinError } = await supabase
-            .from('sm.scrims_sm.assigned_slots')
-            .select('assignedslot_id')
-            .eq('sm.scrims_id', scrimId);
-
-        if (joinError) {
-            console.error('Error fetching slot joins:', joinError);
-            return NextResponse.json({ error: 'Failed to fetch slots' }, { status: 500 });
-        }
+        const [slotJoins] = await db.query<any[]>(
+            `SELECT assignedslot_id FROM \`sm.scrims_sm.assigned_slots\` WHERE \`sm.scrims_id\` = ?`,
+            [scrimId]
+        );
 
         if (!slotJoins || slotJoins.length === 0) {
             return NextResponse.json([]);
         }
 
         const slotIds = slotJoins.map((j: any) => j.assignedslot_id);
+        const placeholders = slotIds.map(() => '?').join(',');
 
         // Get the actual slot data
-        const { data: slots, error: slotsError } = await supabase
-            .from('sm.assigned_slots')
-            .select('id, num, user_id, team_name, members, jump_url')
-            .in('id', slotIds)
-            .order('num', { ascending: true });
-
-        if (slotsError) {
-            console.error('Error fetching assigned slots:', slotsError);
-            return NextResponse.json({ error: 'Failed to fetch slots' }, { status: 500 });
-        }
+        const [slots] = await db.query<any[]>(
+            `SELECT id, num, user_id, team_name, members, jump_url FROM \`sm.assigned_slots\` WHERE id IN (${placeholders}) ORDER BY num ASC`,
+            slotIds
+        );
 
         return NextResponse.json(slots || []);
 
@@ -58,17 +48,16 @@ export async function DELETE(
         }
 
         // Remove from join table
-        await supabase
-            .from('sm.scrims_sm.assigned_slots')
-            .delete()
-            .eq('sm.scrims_id', scrimId)
-            .eq('assignedslot_id', slotId);
+        await db.query(
+            `DELETE FROM \`sm.scrims_sm.assigned_slots\` WHERE \`sm.scrims_id\` = ? AND assignedslot_id = ?`,
+            [scrimId, slotId]
+        );
 
         // Delete the slot itself
-        await supabase
-            .from('sm.assigned_slots')
-            .delete()
-            .eq('id', slotId);
+        await db.query(
+            `DELETE FROM \`sm.assigned_slots\` WHERE id = ?`,
+            [slotId]
+        );
 
         return NextResponse.json({ success: true });
 

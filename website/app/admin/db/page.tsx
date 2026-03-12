@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+
 import { useRouter } from "next/navigation";
 import { Loader2, Database, Table, AlertCircle, RefreshCw, Trash2, Edit2, Plus, ChevronLeft, ChevronRight, Search, Menu, X, Server } from "lucide-react";
 
@@ -26,21 +26,32 @@ export default function AdminDatabasePage() {
 
     useEffect(() => {
         const init = async () => {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (!session) {
+            try {
+                const res = await fetch('/api/auth/me');
+                if (!res.ok) {
+                    router.push("/");
+                    return;
+                }
+
+                const data = await res.json();
+                if (!data.authenticated || !data.user) {
+                    router.push("/");
+                    return;
+                }
+
+                const discordId = data.user.id;
+                if (!DEVS.includes(discordId)) {
+                    setError("You are not authorized to view this page.");
+                    setLoading(false);
+                    return;
+                }
+
+                setUser(data.user);
+                await fetchTables(discordId);
+            } catch (err) {
+                console.error(err);
                 router.push("/");
-                return;
             }
-
-            const discordId = session.user.user_metadata.provider_id;
-            if (!DEVS.includes(discordId)) {
-                setError("You are not authorized to view this page.");
-                setLoading(false);
-                return;
-            }
-
-            setUser(session.user);
-            await fetchTables(discordId);
         };
         init();
     }, []);
@@ -88,7 +99,7 @@ export default function AdminDatabasePage() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    userId: user.user_metadata.provider_id,
+                    userId: user.id,
                     action: 'read_columns',
                     table: tableName
                 })
@@ -101,7 +112,7 @@ export default function AdminDatabasePage() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    userId: user.user_metadata.provider_id,
+                    userId: user.id,
                     action: 'read',
                     table: tableName,
                     payload: { offset: pageIndex * 100 }
@@ -132,7 +143,7 @@ export default function AdminDatabasePage() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    userId: user.user_metadata.provider_id,
+                    userId: user.id,
                     action: 'delete',
                     table: selectedTable,
                     payload: {

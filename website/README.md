@@ -1,36 +1,74 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Argon Bot Website 🚀
 
-## Getting Started
+The official Next.js web dashboard and community hub for **Argon**, the next-generation Discord bot. Built to provide an intuitive interface for managing robust esports tournaments, daily scrims, premium subscriptions, and comprehensive secure server configurations.
 
-First, run the development server:
+## ✨ Features
+
+- **Direct Discord OAuth:** Seamless, secure login flow without relying on third-party auth providers.
+- **Server Dashboard:** View all your Discord guilds where Argon is active.
+- **Tournament Manager:** Create, edit, and configure brackets and esports settings from the web.
+- **Scrims Organization:** Toggle open/closed states, manage slotlists, and configure auto-roles for daily scrims.
+- **Ticketing System:** Configure custom support panels and interactive transcript limits.
+- **Live Statistics:** Real-time metrics tracking total servers, users, and executed commands directly from the database.
+- **Sleek Custom UI:** Built with Tailwind CSS, utilizing a premium `glassmorphism` aesthetic, dynamic animations with Framer Motion, and a custom vibrant purple theme (`bg-primary`).
+
+## 🛠️ Tech Stack
+
+- **Framework:** [Next.js 14+ (App Router)](https://nextjs.org/)
+- **Styling:** Tailwind CSS & Framer Motion
+- **Database:** MySQL (Endercloud) accessed via `mysql2/promise`
+- **Authentication:** Custom Discord OAuth2 with secure HTTP-only JWT Sessions (`jose` library)
+- **Icons:** Lucide React
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+You need [Node.js](https://nodejs.org/) installed, as well as a running MySQL database with the Argon schema loaded.
+
+### 1. Environment Variables
+
+Create a `.env.local` file in the root directory and configure the following variables:
+
+```env
+# Discord OAuth Requirements
+NEXT_PUBLIC_DISCORD_CLIENT_ID=your_discord_bot_client_id
+DISCORD_CLIENT_SECRET=your_discord_bot_client_secret
+DISCORD_BOT_TOKEN=your_discord_bot_token
+
+# Session Encryption
+JWT_SECRET=a_very_long_secure_random_string
+
+# Database Configuration (MySQL)
+DB_HOST=your_database_host
+DB_PORT=3306
+DB_USER=your_database_user
+DB_PASSWORD=your_database_password
+DB_NAME=your_database_name
+```
+
+### 2. Installation
+
+Install the project dependencies using npm:
+
+```bash
+npm install
+```
+
+### 3. Running the Development Server
+
+Start the Next.js development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🤝 Contributing
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Contributions, issues, and feature requests are welcome!
 
-## Learn More
+## 📝 License
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+This project is proprietary and confidential.

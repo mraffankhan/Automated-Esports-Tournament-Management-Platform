@@ -1,14 +1,11 @@
-import { supabase } from "@/lib/supabase";
 import { Search, Users, Shield } from "lucide-react";
 
 export const revalidate = 60;
 
 export default async function TeamsPage() {
-    const { data: teams, error } = await supabase
-        .from("tm.register") // Assuming this is where teams are registered
-        .select("*")
-        .order("id", { ascending: false })
-        .limit(50); // Pagination would be better for production
+    // Temporarily disabled while migrating to Endercloud MySQL
+    const teams: any[] = [];
+    const error = null;
 
     if (error) {
         console.error("Error fetching teams:", error);

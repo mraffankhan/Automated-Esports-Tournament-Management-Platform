@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, use } from "react";
-import { supabase } from "@/lib/supabase";
+
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -138,22 +138,25 @@ export default function TourneyDashboard({
             setLoading(false);
         };
 
-        // Check initial session with retry
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            if (session) {
-                loadData(session);
-            } else {
-                setTimeout(() => {
-                    supabase.auth.getSession().then(({ data: { session: retry } }) => {
-                        if (retry) {
-                            loadData(retry);
-                        } else {
-                            router.push("/");
-                        }
-                    });
-                }, 1000);
+        // Check initial session
+        const fetchSession = async () => {
+            try {
+                const res = await fetch('/api/auth/me');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.authenticated && data.user) {
+                        // Pass user or session data if loadData expects it
+                        loadData(data.user);
+                        return;
+                    }
+                }
+                router.push("/");
+            } catch (err) {
+                router.push("/");
             }
-        });
+        };
+
+        fetchSession();
     }, [guildId, tourneyId, router]);
 
     const loadSlots = async () => {

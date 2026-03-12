@@ -1,43 +1,44 @@
 "use client";
 
-import { supabase } from "@/lib/supabase";
 import { User, LogIn, LogOut, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { User as SupabaseUser } from "@supabase/supabase-js";
+import { User as AuthUser } from "@/lib/session";
 
 export default function ProfilePage() {
-    const [user, setUser] = useState<SupabaseUser | null>(null);
+    const [user, setUser] = useState<AuthUser | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // Check active session
         const getUser = async () => {
-            const { data: { session } } = await supabase.auth.getSession();
-            setUser(session?.user || null);
-            setLoading(false);
+            try {
+                const res = await fetch('/api/auth/me');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.authenticated && data.user) {
+                        setUser(data.user);
+                    } else {
+                        setUser(null);
+                    }
+                } else {
+                    setUser(null);
+                }
+            } catch (err) {
+                console.error(err);
+                setUser(null);
+            } finally {
+                setLoading(false);
+            }
         };
 
         getUser();
-
-        // Listen for auth changes
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-            setUser(session?.user || null);
-        });
-
-        return () => subscription.unsubscribe();
     }, []);
 
-    const handleLogin = async () => {
-        await supabase.auth.signInWithOAuth({
-            provider: 'discord',
-            options: {
-                redirectTo: `${window.location.origin}/profile`, // Redirect back to profile page
-            },
-        });
+    const handleLogin = () => {
+        window.location.href = '/api/auth/discord';
     };
 
     const handleLogout = async () => {
-        await supabase.auth.signOut();
+        await fetch('/api/auth/logout', { method: 'POST' });
         setUser(null);
     };
 

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { db } from '@/lib/db';
 
 export async function POST(
     req: NextRequest,
@@ -9,16 +9,15 @@ export async function POST(
         const { id: guildId, scrimId } = await params;
 
         // 1. Get the scrim
-        const { data: scrim, error: fetchError } = await supabase
-            .from('sm.scrims')
-            .select('*')
-            .eq('id', scrimId)
-            .eq('guild_id', guildId)
-            .single();
+        const [scrimRows] = await db.query<any[]>(
+            `SELECT * FROM \`sm.scrims\` WHERE id = ? AND guild_id = ?`,
+            [scrimId, guildId]
+        );
 
-        if (fetchError || !scrim) {
+        if (scrimRows.length === 0) {
             return NextResponse.json({ error: 'Scrim not found' }, { status: 404 });
         }
+        const scrim = scrimRows[0];
 
         const botToken = process.env.DISCORD_BOT_TOKEN;
         if (!botToken) {
@@ -31,12 +30,12 @@ export async function POST(
         if (isCurrentlyOpen) {
             // CLOSE registration
             // 1. Update scrim in database
-            const { error: updateError } = await supabase
-                .from('sm.scrims')
-                .update({ closed_at: now, opened_at: null })
-                .eq('id', scrimId);
-
-            if (updateError) {
+            try {
+                await db.query(
+                    `UPDATE \`sm.scrims\` SET closed_at = ?, opened_at = NULL WHERE id = ?`,
+                    [now, scrimId]
+                );
+            } catch (updateError) {
                 console.error('[Scrim Toggle] Update error:', updateError);
                 return NextResponse.json({ error: 'Failed to update scrim' }, { status: 500 });
             }
@@ -94,30 +93,27 @@ export async function POST(
         } else {
             // OPEN registration
             // 1. Clear old slots
-            const { data: oldSlotJoins } = await supabase
-                .from('sm.scrims_sm.assigned_slots')
-                .select('assignedslot_id')
-                .eq('sm.scrims_id', scrimId);
+            const [oldSlotJoins] = await db.query<any[]>(
+                `SELECT assignedslot_id FROM \`sm.scrims_sm.assigned_slots\` WHERE \`sm.scrims_id\` = ?`,
+                [scrimId]
+            );
 
             if (oldSlotJoins && oldSlotJoins.length > 0) {
                 const oldSlotIds = oldSlotJoins.map((j: any) => j.assignedslot_id);
-                await supabase.from('sm.assigned_slots').delete().in('id', oldSlotIds);
-                await supabase.from('sm.scrims_sm.assigned_slots').delete().eq('sm.scrims_id', scrimId);
+                const placeholders = oldSlotIds.map(() => '?').join(',');
+                await db.query(`DELETE FROM \`sm.assigned_slots\` WHERE id IN (${placeholders})`, oldSlotIds);
+                await db.query(`DELETE FROM \`sm.scrims_sm.assigned_slots\` WHERE \`sm.scrims_id\` = ?`, [scrimId]);
             }
 
             // 2. Update scrim: set opened_at, clear closed_at, reset available_slots
             const availableSlots = Array.from({ length: scrim.total_slots }, (_, i) => i + (scrim.start_from || 1));
-            const { error: updateError } = await supabase
-                .from('sm.scrims')
-                .update({
-                    opened_at: now,
-                    closed_at: null,
-                    slotlist_message_id: null,
-                    available_slots: availableSlots,
-                })
-                .eq('id', scrimId);
-
-            if (updateError) {
+            try {
+                // MySQL JSON serialization for available_slots
+                await db.query(
+                    `UPDATE \`sm.scrims\` SET opened_at = ?, closed_at = NULL, slotlist_message_id = NULL, available_slots = ? WHERE id = ?`,
+                    [now, JSON.stringify(availableSlots), scrimId]
+                );
+            } catch (updateError) {
                 console.error('[Scrim Toggle] Update error:', updateError);
                 return NextResponse.json({ error: 'Failed to update scrim' }, { status: 500 });
             }

@@ -2,208 +2,205 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { Menu, X, User, LogIn, Loader2 } from "lucide-react";
-import { supabase } from "@/lib/supabase";
-import { User as SupabaseUser } from "@supabase/supabase-js";
+import { Menu, X, LogIn, Loader2 } from "lucide-react";
+import { User } from "@/lib/session";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function Navbar() {
     const [isOpen, setIsOpen] = useState(false);
-    const [user, setUser] = useState<SupabaseUser | null>(null);
+    const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
+    const [scrolled, setScrolled] = useState(false);
+
+    useEffect(() => {
+        const handleScroll = () => setScrolled(window.scrollY > 20);
+        window.addEventListener("scroll", handleScroll);
+        return () => window.removeEventListener("scroll", handleScroll);
+    }, []);
 
     useEffect(() => {
         const handleAuth = async () => {
-            const { data: { session } } = await supabase.auth.getSession();
-            setUser(session?.user || null);
-            setLoading(false);
-
-            // Persist the Discord access token whenever available
-            if (session?.provider_token) {
-                localStorage.setItem('discord_access_token', session.provider_token);
-            }
-
-            if (session?.user && session?.provider_token) {
-                // Trigger auto-join
-                try {
-                    await fetch('/api/join-support', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            userId: session.user.user_metadata.provider_id,
-                            accessToken: session.provider_token
-                        })
-                    });
-                } catch (e) {
-                    console.error("Auto-join error", e);
+            try {
+                const res = await fetch('/api/auth/me');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.authenticated && data.user) {
+                        setUser(data.user);
+                    } else {
+                        setUser(null);
+                    }
+                } else {
+                    setUser(null);
                 }
+            } catch (error) {
+                console.error("Failed to fetch user session", error);
+                setUser(null);
+            } finally {
+                setLoading(false);
             }
         };
 
         handleAuth();
-
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-            setUser(session?.user || null);
-
-            // Persist token on sign-in
-            if (session?.provider_token) {
-                localStorage.setItem('discord_access_token', session.provider_token);
-            }
-
-            if (session?.user && session?.provider_token && _event === 'SIGNED_IN') {
-                // Trigger auto-join on sign in
-                try {
-                    await fetch('/api/join-support', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            userId: session.user.user_metadata.provider_id,
-                            accessToken: session.provider_token
-                        })
-                    });
-                } catch (e) {
-                    console.error("Auto-join error", e);
-                }
-            }
-        });
-
-        return () => subscription.unsubscribe();
     }, []);
 
     const handleLogout = async () => {
-        localStorage.removeItem('discord_access_token');
-        await supabase.auth.signOut();
-        setUser(null);
-        setIsOpen(false);
+        try {
+            await fetch('/api/auth/logout', { method: 'POST' });
+            setUser(null);
+            setIsOpen(false);
+        } catch (error) {
+            console.error("Failed to logout", error);
+        }
     };
 
-    const handleLogin = async () => {
-        await supabase.auth.signInWithOAuth({
-            provider: 'discord',
-            options: {
-                redirectTo: `${window.location.origin}/servers`,
-                scopes: 'guilds identify email guilds.join',
-            },
-        });
+    const handleLogin = () => {
+        window.location.href = '/api/auth/discord';
     };
 
     return (
         <>
-            <nav className="fixed top-6 left-0 right-0 mx-auto w-[95%] max-w-7xl z-50 bg-black/80 backdrop-blur-md border border-primary/20 rounded-full px-6 transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_20px_var(--color-primary-glow)]">
-                <div className="flex items-center justify-between h-16">
+            <motion.nav
+                initial={{ y: -100 }}
+                animate={{ y: 0 }}
+                transition={{ duration: 0.5, ease: "easeOut" }}
+                className={`fixed top-4 left-0 right-0 mx-auto w-[95%] max-w-7xl z-50 transition-all duration-300 rounded-2xl ${scrolled ? "bg-black/60 backdrop-blur-xl border border-primary/20 shadow-[0_4px_30px_rgb(0,0,0,0.5)] py-2" : "bg-transparent py-4 border border-transparent"
+                    }`}
+            >
+                <div className="flex items-center justify-between px-6 h-14">
                     <div className="flex items-center">
-                        <Link href="/" className="text-2xl font-bold bg-gradient-to-r from-primary to-purple-500 bg-clip-text text-transparent hover:text-glow transition-all">
+                        <Link href="/" className="text-2xl font-black tracking-tight text-white hover:text-glow transition-all flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-[0_0_15px_var(--color-primary-glow)]">
+                                <span className="text-white text-lg leading-none">A</span>
+                            </div>
                             ARGON
                         </Link>
                     </div>
-                    <div className="hidden md:block">
-                        <div className="ml-10 flex items-baseline space-x-8 items-center">
-                            <NavLink href="/">HOME</NavLink>
-                            <NavLink href="/servers">DASHBOARD</NavLink>
-                            <NavLink href="/tournaments">TOURNAMENTS</NavLink>
-                            <NavLink href="/premium">PREMIUM</NavLink>
-                            <NavLink href="/commands">COMMANDS</NavLink>
-                            <NavLink href="/get">GET</NavLink>
-                            {user && ["1449081308616720628"].includes(user?.user_metadata?.provider_id) && (
-                                <NavLink href="/admin/db">DATABASE</NavLink>
-                            )}
-
-                            {loading ? (
-                                <div className="h-10 w-10 flex items-center justify-center">
-                                    <Loader2 size={20} className="text-primary animate-spin" />
-                                </div>
-                            ) : user ? (
-                                <Link
-                                    href="/servers"
-                                    className="flex items-center gap-3 pl-2 pr-4 py-1.5 rounded-full bg-primary/10 border border-primary/30 text-primary hover:bg-primary/20 transition-all hover:text-glow hover:border-primary/60 group"
-                                >
-                                    <div className="w-8 h-8 rounded-full overflow-hidden border border-primary/50">
-                                        <img
-                                            src={user.user_metadata.avatar_url}
-                                            alt="User"
-                                            className="w-full h-full object-cover"
-                                        />
-                                    </div>
-                                    <span className="text-sm font-bold truncate max-w-[100px]">
-                                        {user.user_metadata.full_name?.split(' ')[0] || "User"}
-                                    </span>
-                                </Link>
-                            ) : (
-                                <button
-                                    onClick={handleLogin}
-                                    className="flex items-center gap-2 px-6 py-2 rounded-full bg-primary hover:bg-primary/80 text-black font-bold text-sm transition-all hover:scale-105 hover:shadow-[0_0_15px_var(--color-primary-glow)]"
-                                >
-                                    <LogIn size={16} />
-                                    <span>LOGIN</span>
-                                </button>
-                            )}
-                        </div>
-                    </div>
-                    <div className="flex md:hidden">
-                        <button
-                            onClick={() => setIsOpen(true)}
-                            type="button"
-                            className="inline-flex items-center justify-center p-2 rounded-full text-primary hover:text-white hover:bg-primary/20 focus:outline-none transition-colors"
-                        >
-                            <span className="sr-only">Open main menu</span>
-                            <Menu size={24} />
-                        </button>
-                    </div>
-                </div>
-            </nav>
-
-            {/* Full Screen Mobile Menu */}
-            <div className={`fixed inset-0 z-[60] bg-black/95 backdrop-blur-xl transform transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : 'translate-x-full'} md:hidden`}>
-                <div className="flex flex-col h-full">
-                    <div className="flex justify-end p-6">
-                        <button
-                            onClick={() => setIsOpen(false)}
-                            className="p-2 rounded-full text-primary hover:text-white hover:bg-primary/20 transition-colors"
-                        >
-                            <X size={32} />
-                        </button>
-                    </div>
-                    <div className="flex flex-col items-center justify-center flex-grow space-y-8">
-                        <MobileNavLink href="/" onClick={() => setIsOpen(false)}>HOME</MobileNavLink>
-                        <MobileNavLink href="/servers" onClick={() => setIsOpen(false)}>DASHBOARD</MobileNavLink>
-                        <MobileNavLink href="/tournaments" onClick={() => setIsOpen(false)}>TOURNAMENTS</MobileNavLink>
-                        <MobileNavLink href="/premium" onClick={() => setIsOpen(false)}>PREMIUM</MobileNavLink>
-                        <MobileNavLink href="/commands" onClick={() => setIsOpen(false)}>COMMANDS</MobileNavLink>
-                        <MobileNavLink href="/get" onClick={() => setIsOpen(false)}>GET</MobileNavLink>
-                        {user && ["1449081308616720628"].includes(user?.user_metadata?.provider_id) && (
-                            <MobileNavLink href="/admin/db" onClick={() => setIsOpen(false)}>DATABASE</MobileNavLink>
+                    <div className="hidden md:flex items-center space-x-8">
+                        <NavLink href="/#features">Features</NavLink>
+                        <NavLink href="/servers">Dashboard</NavLink>
+                        <NavLink href="/#community">Community</NavLink>
+                        <NavLink href="/commands">Docs</NavLink>
+                        {user && ["1449081308616720628"].includes(user?.id) && (
+                            <NavLink href="/admin/db">Database</NavLink>
                         )}
+                    </div>
 
-                        {user ? (
-                            <div className="flex flex-col items-center gap-4 mt-8">
-                                <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-primary shadow-[0_0_20px_var(--color-primary-glow)]">
+                    <div className="hidden md:flex items-center gap-4">
+                        {loading ? (
+                            <div className="h-10 w-10 flex items-center justify-center">
+                                <Loader2 size={20} className="text-primary animate-spin" />
+                            </div>
+                        ) : user ? (
+                            <Link
+                                href="/servers"
+                                className="flex items-center gap-3 pl-2 pr-4 py-1.5 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-all group backdrop-blur-sm"
+                            >
+                                <div className="w-7 h-7 rounded-full overflow-hidden">
                                     <img
-                                        src={user.user_metadata.avatar_url}
+                                        src={user.avatar || "/default-avatar.png"}
                                         alt="User"
                                         className="w-full h-full object-cover"
                                     />
                                 </div>
-                                <span className="text-2xl font-bold text-white mb-2">
-                                    {user.user_metadata.full_name}
+                                <span className="text-sm font-medium text-gray-200 group-hover:text-white truncate max-w-[100px]">
+                                    {user.global_name?.split(' ')[0] || user.username}
                                 </span>
-                                <button
-                                    onClick={handleLogout}
-                                    className="flex items-center gap-2 px-6 py-3 rounded-full bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 border border-red-500/30 transition-all"
-                                >
-                                    <span>Sign Out</span>
-                                </button>
-                            </div>
+                            </Link>
                         ) : (
-                            <button
-                                onClick={() => { setIsOpen(false); handleLogin(); }}
-                                className="mt-8 flex items-center gap-3 px-8 py-4 rounded-full bg-primary hover:bg-primary/80 text-black font-bold text-xl transition-all hover:scale-105 hover:shadow-[0_0_20px_var(--color-primary-glow)]"
-                            >
-                                <LogIn size={24} />
-                                <span>LOGIN NOW</span>
-                            </button>
+                            <>
+                                <button
+                                    onClick={handleLogin}
+                                    className="text-sm font-medium text-gray-300 hover:text-white transition-colors"
+                                >
+                                    Login
+                                </button>
+                                <Link
+                                    href="/get"
+                                    className="px-5 py-2 rounded-lg bg-white text-black text-sm font-semibold hover:bg-gray-200 transition-all shadow-[0_0_20px_rgba(255,255,255,0.3)] hover:scale-105"
+                                >
+                                    Add to Discord
+                                </Link>
+                            </>
                         )}
                     </div>
+
+                    <div className="flex md:hidden">
+                        <button
+                            onClick={() => setIsOpen(true)}
+                            type="button"
+                            className="p-2 rounded-lg text-gray-300 hover:text-white hover:bg-white/10 transition-colors"
+                        >
+                            <Menu size={24} />
+                        </button>
+                    </div>
                 </div>
-            </div>
+            </motion.nav>
+
+            <AnimatePresence>
+                {isOpen && (
+                    <motion.div
+                        initial={{ opacity: 0, x: "100%" }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: "100%" }}
+                        transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                        className="fixed inset-0 z-[60] bg-black/95 backdrop-blur-2xl md:hidden"
+                    >
+                        <div className="flex flex-col h-full">
+                            <div className="flex justify-end p-6">
+                                <button
+                                    onClick={() => setIsOpen(false)}
+                                    className="p-2 rounded-full text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 transition-colors"
+                                >
+                                    <X size={24} />
+                                </button>
+                            </div>
+                            <div className="flex flex-col items-center justify-center flex-grow space-y-8 p-6">
+                                <MobileNavLink href="/" onClick={() => setIsOpen(false)}>Home</MobileNavLink>
+                                <MobileNavLink href="/#features" onClick={() => setIsOpen(false)}>Features</MobileNavLink>
+                                <MobileNavLink href="/servers" onClick={() => setIsOpen(false)}>Dashboard</MobileNavLink>
+                                <MobileNavLink href="/commands" onClick={() => setIsOpen(false)}>Docs</MobileNavLink>
+                                <MobileNavLink href="/get" onClick={() => setIsOpen(false)}>Support</MobileNavLink>
+
+                                {user ? (
+                                    <div className="flex flex-col items-center gap-4 mt-8 w-full pb-8 border-b border-white/10">
+                                        <div className="w-20 h-20 rounded-full overflow-hidden border border-white/20">
+                                            <img
+                                                src={user.avatar || "/default-avatar.png"}
+                                                alt="User"
+                                                className="w-full h-full object-cover"
+                                            />
+                                        </div>
+                                        <span className="text-xl font-bold text-white">
+                                            {user.global_name || user.username}
+                                        </span>
+                                        <button
+                                            onClick={handleLogout}
+                                            className="w-full py-3 mt-4 rounded-xl bg-red-500/10 text-red-400 font-medium border border-red-500/20"
+                                        >
+                                            Sign Out
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div className="w-full flex gap-4 mt-8 pt-8 border-t border-white/10">
+                                        <button
+                                            onClick={() => { setIsOpen(false); handleLogin(); }}
+                                            className="flex-1 py-3 rounded-xl bg-white/5 text-white font-medium border border-white/10"
+                                        >
+                                            Login
+                                        </button>
+                                        <button
+                                            onClick={() => setIsOpen(false)}
+                                            className="flex-1 py-3 rounded-xl bg-white text-black font-semibold shadow-[0_0_15px_rgba(255,255,255,0.3)]"
+                                        >
+                                            Add Bot
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </>
     );
 }
@@ -212,10 +209,10 @@ function NavLink({ href, children }: { href: string; children: React.ReactNode }
     return (
         <Link
             href={href}
-            className="text-gray-300 hover:text-primary px-3 py-2 text-sm font-medium transition-colors hover:text-glow relative group"
+            className="text-gray-400 hover:text-white text-sm font-medium transition-colors relative group"
         >
             {children}
-            <span className="absolute bottom-0 left-0 w-full h-0.5 bg-primary transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
+            <span className="absolute -bottom-1 left-0 w-full h-[2px] bg-gradient-to-r from-primary to-secondary transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
         </Link>
     );
 }
@@ -225,7 +222,7 @@ function MobileNavLink({ href, onClick, children }: { href: string; onClick: () 
         <Link
             href={href}
             onClick={onClick}
-            className="text-3xl font-bold text-gray-300 hover:text-primary transition-colors hover:text-glow"
+            className="text-2xl font-bold text-gray-400 hover:text-white transition-colors"
         >
             {children}
         </Link>

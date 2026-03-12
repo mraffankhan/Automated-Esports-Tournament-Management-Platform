@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { db } from '@/lib/db';
 
 export async function GET(
     req: NextRequest,
@@ -9,27 +9,18 @@ export async function GET(
         const { id: guildId } = await params;
 
         // Fetch tickets for this guild
-        const { data: tickets, error: ticketsError } = await supabase
-            .from('tickets')
-            .select('id, guild_id, channel_id, opener_id, config_id, opened_at, closed_at, closed_by, reason')
-            .eq('guild_id', guildId)
-            .order('opened_at', { ascending: false });
-
-        if (ticketsError) {
-            console.error('Supabase error fetching tickets:', ticketsError);
-            return NextResponse.json({ error: 'Failed to fetch tickets' }, { status: 500 });
-        }
+        const [tickets] = await db.query<any[]>(
+            `SELECT id, guild_id, channel_id, opener_id, config_id, opened_at, closed_at, closed_by, reason 
+             FROM \`tickets\` WHERE guild_id = ? ORDER BY opened_at DESC`,
+            [guildId]
+        );
 
         // Fetch ticket configs for this guild to get panel titles
-        const { data: configs, error: configsError } = await supabase
-            .from('ticket_configs')
-            .select('id, title, channel_id, category_id, support_role_id, log_channel_id, max_tickets')
-            .eq('guild_id', guildId);
-
-        if (configsError) {
-            console.error('Supabase error fetching ticket configs:', configsError);
-            return NextResponse.json({ error: 'Failed to fetch ticket configs' }, { status: 500 });
-        }
+        const [configs] = await db.query<any[]>(
+            `SELECT id, title, channel_id, category_id, support_role_id, log_channel_id, max_tickets 
+             FROM \`ticket_configs\` WHERE guild_id = ?`,
+            [guildId]
+        );
 
         // Build a map of config_id -> title
         const configMap: Record<number, string> = {};
@@ -69,43 +60,36 @@ export async function PATCH(
         }
 
         if (action === 'close') {
-            const { data, error } = await supabase
-                .from('tickets')
-                .update({
-                    closed_at: new Date().toISOString(),
-                    closed_by: userId || null,
-                })
-                .eq('id', ticketId)
-                .eq('guild_id', guildId)
-                .select()
-                .single();
+            try {
+                const now = new Date().toISOString();
+                await db.query(
+                    `UPDATE \`tickets\` SET closed_at = ?, closed_by = ? WHERE id = ? AND guild_id = ?`,
+                    [now, userId || null, ticketId, guildId]
+                );
 
-            if (error) {
-                console.error('Supabase error closing ticket:', error);
+                // Fetch the updated ticket
+                const [rows] = await db.query<any[]>(`SELECT * FROM \`tickets\` WHERE id = ? AND guild_id = ?`, [ticketId, guildId]);
+                return NextResponse.json({ success: true, ticket: rows[0] });
+            } catch (error) {
+                console.error('MySQL error closing ticket:', error);
                 return NextResponse.json({ error: 'Failed to close ticket' }, { status: 500 });
             }
-
-            return NextResponse.json({ success: true, ticket: data });
         }
 
         if (action === 'reopen') {
-            const { data, error } = await supabase
-                .from('tickets')
-                .update({
-                    closed_at: null,
-                    closed_by: null,
-                })
-                .eq('id', ticketId)
-                .eq('guild_id', guildId)
-                .select()
-                .single();
+            try {
+                await db.query(
+                    `UPDATE \`tickets\` SET closed_at = NULL, closed_by = NULL WHERE id = ? AND guild_id = ?`,
+                    [ticketId, guildId]
+                );
 
-            if (error) {
-                console.error('Supabase error reopening ticket:', error);
+                // Fetch the updated ticket
+                const [rows] = await db.query<any[]>(`SELECT * FROM \`tickets\` WHERE id = ? AND guild_id = ?`, [ticketId, guildId]);
+                return NextResponse.json({ success: true, ticket: rows[0] });
+            } catch (error) {
+                console.error('MySQL error reopening ticket:', error);
                 return NextResponse.json({ error: 'Failed to reopen ticket' }, { status: 500 });
             }
-
-            return NextResponse.json({ success: true, ticket: data });
         }
 
         return NextResponse.json({ error: 'Invalid action. Use "close" or "reopen".' }, { status: 400 });

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { db } from '@/lib/db';
 
 export async function GET(
     req: NextRequest,
@@ -8,24 +8,23 @@ export async function GET(
     try {
         const { id: guildId, scrimId } = await params;
 
-        const { data, error } = await supabase
-            .from('sm.scrims')
-            .select('*')
-            .eq('id', scrimId)
-            .eq('guild_id', guildId)
-            .single();
+        const [rows] = await db.query<any[]>(
+            `SELECT * FROM \`sm.scrims\` WHERE id = ? AND guild_id = ? LIMIT 1`,
+            [scrimId, guildId]
+        );
 
-        if (error || !data) {
+        if (rows.length === 0) {
             return NextResponse.json({ error: 'Scrim not found' }, { status: 404 });
         }
+        const data = rows[0];
 
         // Get slot count from the join table
-        const { count } = await supabase
-            .from('sm.scrims_sm.assigned_slots')
-            .select('*', { count: 'exact', head: true })
-            .eq('sm.scrims_id', scrimId);
+        const [countRows] = await db.query<any[]>(
+            `SELECT COUNT(*) as count FROM \`sm.scrims_sm.assigned_slots\` WHERE \`sm.scrims_id\` = ?`,
+            [scrimId]
+        );
 
-        return NextResponse.json({ ...data, slot_count: count || 0 });
+        return NextResponse.json({ ...data, slot_count: countRows[0].count || 0 });
 
     } catch (error) {
         console.error('Error fetching scrim:', error);
@@ -61,20 +60,17 @@ export async function PATCH(
             return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 });
         }
 
-        const { data, error } = await supabase
-            .from('sm.scrims')
-            .update(updates)
-            .eq('id', scrimId)
-            .eq('guild_id', guildId)
-            .select()
-            .single();
-
-        if (error) {
-            console.error('Supabase error updating scrim:', error);
-            return NextResponse.json({ error: 'Failed to update scrim', details: error.message }, { status: 500 });
+        const setClauses = [];
+        const values = [];
+        for (const [key, value] of Object.entries(updates)) {
+            setClauses.push(`\`${key}\` = ?`);
+            values.push(typeof value === 'boolean' ? (value ? 1 : 0) : value);
         }
+        values.push(scrimId, guildId);
 
-        return NextResponse.json(data);
+        await db.query(`UPDATE \`sm.scrims\` SET ${setClauses.join(', ')} WHERE id = ? AND guild_id = ?`, values);
+
+        return NextResponse.json({ success: true, ...updates });
 
     } catch (error) {
         console.error('Error updating scrim:', error);
@@ -90,52 +86,44 @@ export async function DELETE(
         const { id: guildId, scrimId } = await params;
 
         // 1. Get the scrim first to find the role_id
-        const { data: scrim, error: fetchError } = await supabase
-            .from('sm.scrims')
-            .select('role_id')
-            .eq('id', scrimId)
-            .eq('guild_id', guildId)
-            .single();
+        const [scrimRows] = await db.query<any[]>(
+            `SELECT role_id FROM \`sm.scrims\` WHERE id = ? AND guild_id = ?`,
+            [scrimId, guildId]
+        );
 
-        if (fetchError || !scrim) {
+        if (scrimRows.length === 0) {
             return NextResponse.json({ error: 'Scrim not found' }, { status: 404 });
         }
+        const scrim = scrimRows[0];
 
         // 2. Delete assigned slots (via join table)
-        const { data: slotJoins } = await supabase
-            .from('sm.scrims_sm.assigned_slots')
-            .select('assignedslot_id')
-            .eq('sm.scrims_id', scrimId);
+        const [slotJoins] = await db.query<any[]>(
+            `SELECT assignedslot_id FROM \`sm.scrims_sm.assigned_slots\` WHERE \`sm.scrims_id\` = ?`,
+            [scrimId]
+        );
 
         if (slotJoins && slotJoins.length > 0) {
             const slotIds = slotJoins.map((j: any) => j.assignedslot_id);
-            await supabase.from('sm.assigned_slots').delete().in('id', slotIds);
-            await supabase.from('sm.scrims_sm.assigned_slots').delete().eq('sm.scrims_id', scrimId);
+            const placeholders = slotIds.map(() => '?').join(',');
+            await db.query(`DELETE FROM \`sm.assigned_slots\` WHERE id IN (${placeholders})`, slotIds);
+            await db.query(`DELETE FROM \`sm.scrims_sm.assigned_slots\` WHERE \`sm.scrims_id\` = ?`, [scrimId]);
         }
 
         // 3. Delete reserved slots (via join table)
-        const { data: reservedJoins } = await supabase
-            .from('sm.scrims_sm.reserved_slots')
-            .select('reservedslot_id')
-            .eq('sm.scrims_id', scrimId);
+        const [reservedJoins] = await db.query<any[]>(
+            `SELECT reservedslot_id FROM \`sm.scrims_sm.reserved_slots\` WHERE \`sm.scrims_id\` = ?`,
+            [scrimId]
+        );
 
         if (reservedJoins && reservedJoins.length > 0) {
             const reservedIds = reservedJoins.map((j: any) => j.reservedslot_id);
-            await supabase.from('sm.reserved_slots').delete().in('id', reservedIds);
-            await supabase.from('sm.scrims_sm.reserved_slots').delete().eq('sm.scrims_id', scrimId);
+            const placeholders = reservedIds.map(() => '?').join(',');
+            await db.query(`DELETE FROM \`sm.reserved_slots\` WHERE id IN (${placeholders})`, reservedIds);
+            await db.query(`DELETE FROM \`sm.scrims_sm.reserved_slots\` WHERE \`sm.scrims_id\` = ?`, [scrimId]);
         }
 
         // 4. Delete the scrim itself
-        const { error: deleteError } = await supabase
-            .from('sm.scrims')
-            .delete()
-            .eq('id', scrimId)
-            .eq('guild_id', guildId);
-
-        if (deleteError) {
-            console.error('Supabase error deleting scrim:', deleteError);
-            return NextResponse.json({ error: 'Failed to delete scrim' }, { status: 500 });
-        }
+        await db.query(`DELETE FROM \`sm.scrims\` WHERE id = ? AND guild_id = ?`, [scrimId, guildId]);
 
         // 5. Try to delete the Discord role (non-blocking)
         if (scrim.role_id) {

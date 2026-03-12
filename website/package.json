@@ -9,15 +9,17 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.95.3",
     "dotenv": "^17.3.1",
+    "framer-motion": "^12.35.1",
     "ioredis": "^5.9.3",
+    "jose": "^6.2.0",
     "lucide-react": "^0.563.0",
     "mysql2": "^3.18.2",
     "next": "16.1.6",
     "postgres": "^3.4.8",
     "react": "19.2.3",
-    "react-dom": "19.2.3"
+    "react-dom": "19.2.3",
+    "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

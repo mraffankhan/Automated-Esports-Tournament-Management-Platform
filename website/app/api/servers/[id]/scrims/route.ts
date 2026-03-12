@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { db } from '@/lib/db';
 
 export async function GET(
     req: NextRequest,
@@ -8,18 +8,15 @@ export async function GET(
     try {
         const { id: guildId } = await params;
 
-        const { data, error } = await supabase
-            .from('sm.scrims')
-            .select('id, guild_id, name, registration_channel_id, slotlist_channel_id, role_id, required_mentions, total_slots, host_id, open_time, opened_at, closed_at, stoggle, ping_role_id, multiregister, autoslotlist, autodelete_rejects, autodelete_extras, teamname_compulsion, no_duplicate_name, open_role_id, start_from')
-            .eq('guild_id', guildId)
-            .order('open_time', { ascending: true });
+        const [rows] = await db.query<any[]>(
+            `SELECT id, guild_id, name, registration_channel_id, slotlist_channel_id, role_id, required_mentions, total_slots, host_id, open_time, opened_at, closed_at, stoggle, ping_role_id, multiregister, autoslotlist, autodelete_rejects, autodelete_extras, teamname_compulsion, no_duplicate_name, open_role_id, start_from 
+             FROM \`sm.scrims\` 
+             WHERE guild_id = ? 
+             ORDER BY open_time ASC`,
+            [guildId]
+        );
 
-        if (error) {
-            console.error('Supabase error fetching scrims:', error);
-            return NextResponse.json({ error: 'Failed to fetch scrims' }, { status: 500 });
-        }
-
-        return NextResponse.json(data || []);
+        return NextResponse.json(rows || []);
 
     } catch (error) {
         console.error('Error fetching scrims:', error);
@@ -81,41 +78,23 @@ export async function POST(
         // 2. Generate a unique ID (snowflake-like)
         const uniqueId = BigInt(Date.now()) * BigInt(1000) + BigInt(Math.floor(Math.random() * 1000));
 
-        // 3. Insert into Supabase
-        const { data, error } = await supabase
-            .from('sm.scrims')
-            .insert({
-                id: uniqueId.toString(),
-                guild_id: guildId,
-                name,
-                registration_channel_id,
-                slotlist_channel_id,
-                role_id: role.id,
-                total_slots,
-                required_mentions,
-                ping_role_id,
-                host_id,
-                open_time,
-                stoggle: true,
-                autoslotlist: true,
-                autodelete_extras: true,
-                start_from: 1,
-                available_slots: Array.from({ length: total_slots }, (_, i) => i + 1),
-            })
-            .select()
-            .single();
+        await db.query(`
+            INSERT INTO \`sm.scrims\` (
+                id, guild_id, name, registration_channel_id, slotlist_channel_id, role_id, 
+                total_slots, required_mentions, ping_role_id, host_id, open_time, 
+                stoggle, autoslotlist, autodelete_extras, start_from
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `, [
+            uniqueId.toString(), guildId, name, registration_channel_id, slotlist_channel_id, role.id,
+            total_slots, required_mentions, ping_role_id || null, host_id, open_time,
+            1, 1, 1, 1
+        ]);
 
-        if (error) {
-            console.error('Supabase error creating scrim:', error);
-            // Cleanup: delete the role we just created
-            await fetch(`https://discord.com/api/v10/guilds/${guildId}/roles/${role.id}`, {
-                method: 'DELETE',
-                headers: { 'Authorization': `Bot ${botToken}` },
-            });
-            return NextResponse.json({ error: 'Failed to create scrim', details: error.message }, { status: 500 });
-        }
-
-        return NextResponse.json(data, { status: 201 });
+        return NextResponse.json({
+            id: uniqueId.toString(), guild_id: guildId, name, registration_channel_id, slotlist_channel_id,
+            role_id: role.id, total_slots, required_mentions, ping_role_id, host_id, open_time,
+            stoggle: 1, autoslotlist: 1, autodelete_extras: 1, start_from: 1
+        }, { status: 201 });
 
     } catch (error) {
         console.error('Error creating scrim:', error);

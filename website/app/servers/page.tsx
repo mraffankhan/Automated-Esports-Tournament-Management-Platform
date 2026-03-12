@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+
 import { useRouter } from "next/navigation";
 import { Loader2, Shield, Server, Crown, ShieldCheck, Settings2, Users, Info, X, Hash, LogIn } from "lucide-react";
 import Link from "next/link";
@@ -31,87 +31,71 @@ export default function ServersPage() {
 
     useEffect(() => {
         let isMounted = true;
-        let loaded = false;
 
-        const loadGuilds = async (session: any) => {
-            if (!isMounted || loaded) return;
-            loaded = true;
-            setUser(session.user);
-            const discordId = session.user.user_metadata?.provider_id;
-            if (discordId && DEVS.includes(discordId)) {
-                setIsDev(true);
-            }
-
-            const accessToken = session.provider_token || localStorage.getItem('discord_access_token');
-
-            if (!accessToken) {
-                if (isMounted) {
-                    setError("Discord access token expired. Please log out and log in again.");
-                    setLoading(false);
-                }
-                return;
-            }
-
-            if (session.provider_token) {
-                localStorage.setItem('discord_access_token', session.provider_token);
-            }
-
-            // Fetch with retry for rate limits
-            const fetchWithRetry = async (retries = 2): Promise<void> => {
-                try {
-                    const response = await fetch("/api/discord/guilds", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ accessToken }),
-                    });
-
-                    if (response.ok) {
-                        const data = await response.json();
-                        if (isMounted) setGuilds(data.filter((g: Guild) => g.has_bot));
-                    } else if (response.status === 429 && retries > 0) {
-                        // Rate limited — wait and retry
-                        const body = await response.json().catch(() => ({}));
-                        const delay = (body.details?.retry_after || 1) * 1000 + 500;
-                        await new Promise(r => setTimeout(r, delay));
-                        return fetchWithRetry(retries - 1);
-                    } else if (response.status === 401) {
-                        localStorage.removeItem('discord_access_token');
-                        if (isMounted) setError("Discord session expired. Please log out and log in again.");
-                    } else {
-                        if (isMounted) setError("Failed to fetch servers. Try logging in again.");
+        const loadGuilds = async () => {
+            try {
+                // First get user session
+                const sessionRes = await fetch('/api/auth/me');
+                if (!sessionRes.ok) {
+                    if (isMounted) {
+                        setLoading(false);
                     }
-                } catch (err) {
-                    if (isMounted) setError("Network error. Please try again.");
+                    return;
                 }
-            };
 
-            await fetchWithRetry();
-            if (isMounted) setLoading(false);
+                const sessionData = await sessionRes.json();
+                if (!sessionData.authenticated) {
+                    if (isMounted) setLoading(false);
+                    return;
+                }
+
+                if (isMounted) {
+                    setUser(sessionData.user);
+                    if (DEVS.includes(sessionData.user.id)) {
+                        setIsDev(true);
+                    }
+                }
+
+                // Fetch servers 
+                const fetchServers = async (retries = 2): Promise<void> => {
+                    try {
+                        // NOTE: Backend now extracts accessToken from the session cookie
+                        // No need to pass it in the body.
+                        const response = await fetch("/api/discord/guilds", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({}),
+                        });
+
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (isMounted) setGuilds(data.filter((g: Guild) => g.has_bot));
+                        } else if (response.status === 429 && retries > 0) {
+                            const body = await response.json().catch(() => ({}));
+                            const delay = (body.details?.retry_after || 1) * 1000 + 500;
+                            await new Promise(r => setTimeout(r, delay));
+                            return fetchServers(retries - 1);
+                        } else if (response.status === 401) {
+                            if (isMounted) setError("Session expired. Please log out and log in again.");
+                        } else {
+                            if (isMounted) setError("Failed to fetch servers. Try logging in again.");
+                        }
+                    } catch (err) {
+                        if (isMounted) setError("Network error. Please try again.");
+                    }
+                };
+
+                await fetchServers();
+            } catch (err) {
+                console.error("Failed to load user or servers", err);
+            } finally {
+                if (isMounted) setLoading(false);
+            }
         };
 
-        // Use getSession only — no duplicate from onAuthStateChange
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            if (!isMounted) return;
-            if (session) {
-                loadGuilds(session);
-            } else {
-                // Wait briefly for session to restore from cookies
-                setTimeout(() => {
-                    if (!isMounted) return;
-                    supabase.auth.getSession().then(({ data: { session: retry } }) => {
-                        if (!isMounted) return;
-                        if (retry) {
-                            loadGuilds(retry);
-                        } else {
-                            setLoading(false); // Show login screen instead of redirecting
-                        }
-                    });
-                }, 1000);
-            }
-        });
-
+        loadGuilds();
         return () => { isMounted = false; };
-    }, [router]);
+    }, []);
 
     if (loading) {
         return (
@@ -129,8 +113,7 @@ export default function ServersPage() {
                 <p className="text-red-400 text-center max-w-md">{error}</p>
                 <button
                     onClick={async () => {
-                        localStorage.removeItem('discord_access_token');
-                        await supabase.auth.signOut();
+                        await fetch('/api/auth/logout', { method: 'POST' });
                         router.push("/");
                     }}
                     className="px-6 py-2 bg-primary hover:bg-primary/80 text-black font-bold rounded-lg transition-all"
@@ -154,14 +137,8 @@ export default function ServersPage() {
                     </p>
                 </div>
                 <button
-                    onClick={async () => {
-                        await supabase.auth.signInWithOAuth({
-                            provider: 'discord',
-                            options: {
-                                redirectTo: `${window.location.origin}/auth/callback`,
-                                scopes: 'identify guild.members.read guilds guilds.join',
-                            },
-                        });
+                    onClick={() => {
+                        window.location.href = '/api/auth/discord';
                     }}
                     className="px-8 py-3 bg-[#5865F2] hover:bg-[#4752C4] text-white font-bold rounded-xl transition-all shadow-lg hover:shadow-xl hover:-translate-y-1 flex items-center gap-2"
                 >
@@ -189,7 +166,7 @@ export default function ServersPage() {
                         </p>
                     </div>
                     <span className="text-gray-400 text-sm hidden sm:block">
-                        Logged in as <span className="text-white font-bold">{user?.user_metadata?.full_name}</span>
+                        Logged in as <span className="text-white font-bold">{user?.global_name || user?.username}</span>
                     </span>
                 </div>
 
@@ -278,16 +255,15 @@ export default function ServersPage() {
                                             onClick={async () => {
                                                 setJoiningGuild(guild.id);
                                                 try {
-                                                    const accessToken = localStorage.getItem('discord_access_token');
-                                                    const userId = user?.user_metadata?.provider_id;
-                                                    if (!accessToken || !userId) {
+                                                    const userId = user?.id;
+                                                    if (!userId) {
                                                         alert('Missing access token or user ID. Please re-login.');
                                                         return;
                                                     }
                                                     const res = await fetch('/api/join-support', {
                                                         method: 'POST',
                                                         headers: { 'Content-Type': 'application/json' },
-                                                        body: JSON.stringify({ userId, accessToken, guildId: guild.id }),
+                                                        body: JSON.stringify({ userId, guildId: guild.id }),
                                                     });
                                                     const data = await res.json();
                                                     if (data.success) {

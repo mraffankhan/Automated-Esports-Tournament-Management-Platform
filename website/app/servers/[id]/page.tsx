@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, use } from "react";
-import { supabase } from "@/lib/supabase";
+
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -172,25 +172,24 @@ export default function ServerManagePage({ params }: { params: Promise<{ id: str
             if (isMounted) setLoading(false);
         };
 
-        // Check initial session with retry
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            if (!isMounted) return;
-            if (session) {
-                loadData(session);
-            } else {
-                setTimeout(() => {
-                    if (!isMounted) return;
-                    supabase.auth.getSession().then(({ data: { session: retry } }) => {
-                        if (!isMounted) return;
-                        if (retry) {
-                            loadData(retry);
-                        } else {
-                            setLoading(false);
-                        }
-                    });
-                }, 1000);
+        // Check initial session
+        const fetchSession = async () => {
+            try {
+                const res = await fetch('/api/auth/me');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.authenticated && data.user) {
+                        if (isMounted) loadData(data); // data has .user, which loadData expects inside session.user
+                        return;
+                    }
+                }
+                if (isMounted) setLoading(false);
+            } catch (err) {
+                if (isMounted) setLoading(false);
             }
-        });
+        };
+
+        fetchSession();
 
         return () => { isMounted = false; };
     }, [guildId, router]);
@@ -324,14 +323,8 @@ export default function ServerManagePage({ params }: { params: Promise<{ id: str
                     </p>
                 </div>
                 <button
-                    onClick={async () => {
-                        await supabase.auth.signInWithOAuth({
-                            provider: 'discord',
-                            options: {
-                                redirectTo: `${window.location.origin}/auth/callback`,
-                                scopes: 'identify guild.members.read guilds guilds.join',
-                            },
-                        });
+                    onClick={() => {
+                        router.push('/api/auth/discord');
                     }}
                     className="px-8 py-3 bg-[#5865F2] hover:bg-[#4752C4] text-white font-bold rounded-xl transition-all shadow-lg hover:shadow-xl hover:-translate-y-1 flex items-center gap-2"
                 >

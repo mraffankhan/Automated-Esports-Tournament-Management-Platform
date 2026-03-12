@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { db } from '@/lib/db';
 import { redis } from '@/lib/redis';
 
 export const dynamic = 'force-dynamic';
@@ -28,36 +28,25 @@ export async function GET(
         }
 
         // 1. Fetch Guild Premium Status
-        const { data: guild, error: guildError } = await supabase
-            .from('guild_data')
-            .select('is_premium, premium_end_time, made_premium_by')
-            .eq('guild_id', guildId)
-            .single();
-
-        if (guildError && guildError.code !== 'PGRST116') { // Ignore "not found"
-            console.error('Error fetching guild premium:', guildError);
-        }
+        const [guildRows] = await db.query<any[]>(
+            `SELECT is_premium, premium_end_time, made_premium_by FROM \`guild_data\` WHERE guild_id = ?`,
+            [guildId]
+        );
+        const guild = guildRows[0] || null;
 
         // 2. Fetch Premium Plans
-        const { data: plans, error: plansError } = await supabase
-            .from('premium_plans')
-            .select('*')
-            .order('price', { ascending: true });
-
-        if (plansError) {
-            console.error('Error fetching premium plans:', plansError);
-        }
+        const [plans] = await db.query<any[]>(
+            `SELECT * FROM \`premium_plans\` ORDER BY price ASC`
+        );
 
         // 3. Fetch User Premium Status
         let userData = null;
         if (userId) {
-            const { data: user, error: userError } = await supabase
-                .from('user_data')
-                .select('is_premium, premium_expire_time')
-                .eq('user_id', userId)
-                .single();
-
-            if (!userError) userData = user;
+            const [userRows] = await db.query<any[]>(
+                `SELECT is_premium, premium_expire_time FROM \`user_data\` WHERE user_id = ?`,
+                [userId]
+            );
+            if (userRows.length > 0) userData = userRows[0];
         }
 
         const response = {
