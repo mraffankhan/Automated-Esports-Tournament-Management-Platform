@@ -2,27 +2,35 @@ import { db } from "@/lib/db";
 import Link from "next/link";
 import { ArrowLeft, Users, Shield, Crown } from "lucide-react";
 
+export const dynamic = "force-dynamic";
 export const revalidate = 60;
 
 export default async function TournamentTeamsPage({ params }: { params: { id: string } }) {
     const { id } = await params;
 
-    // Fetch tournament details
-    const [tourneyRows]: any = await db.execute(
-        `SELECT * FROM \`tm.tourney\` WHERE id = ? LIMIT 1`,
-        [id]
-    );
-    const tourney = tourneyRows?.[0] || null;
+    let tourney = null;
+    let teams = [];
 
-    // Fetch registered teams using the join table
-    const [teamRows]: any = await db.execute(
-        `SELECT s.* FROM \`tm.tourney_tm.register\` j 
-         INNER JOIN \`tm.register\` s ON s.id = j.tmslot_id 
-         WHERE j.\`tm.tourney_id\` = ? 
-         ORDER BY s.num ASC`,
-        [id]
-    );
-    const teams = teamRows || [];
+    try {
+        // Fetch tournament details
+        const [tourneyRows]: any = await db.execute(
+            `SELECT * FROM \`tm.tourney\` WHERE id = ? LIMIT 1`,
+            [id]
+        );
+        tourney = tourneyRows?.[0] || null;
+
+        // Fetch registered teams using the join table
+        const [teamRows]: any = await db.execute(
+            `SELECT s.* FROM \`tm.tourney_tm.register\` j 
+             INNER JOIN \`tm.register\` s ON s.id = j.tmslot_id 
+             WHERE j.\`tm.tourney_id\` = ? 
+             ORDER BY s.num ASC`,
+            [id]
+        );
+        teams = teamRows || [];
+    } catch (error) {
+        console.error(`Failed to fetch teams for tournament ${id}:`, error);
+    }
 
     return (
         <div className="min-h-screen py-32 px-4 sm:px-6 lg:px-8 bg-black">

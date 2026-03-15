@@ -69,9 +69,7 @@ export default function Navbar() {
                 <div className="flex items-center justify-between px-6 h-14">
                     <div className="flex items-center">
                         <Link href="/" className="text-2xl font-black tracking-tight text-white hover:text-glow transition-all flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-[0_0_15px_var(--color-primary-glow)]">
-                                <span className="text-white text-lg leading-none">A</span>
-                            </div>
+                            <img src="/R_logo.png" alt="Logo" className="w-9 h-9 rounded-lg object-cover" />
                             ARGON
                         </Link>
                     </div>
